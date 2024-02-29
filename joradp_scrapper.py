@@ -1,19 +1,19 @@
 import scrapy
 
+
 class JoradpSpider(scrapy.Spider):
     name = 'joradp'
     start_urls = ['https://www.joradp.dz/HAR/Index.htm']
 
     def parse(self, response):
         # Step 2: Extract href attribute from the specified element
-        href = response.css('a[title="عرض الجرائد"]::attr(href)').get()
-        
+        href = "https://www.joradp.dz/JRN/ZA2024.htm"
         if href:
+
             # Step 3: Extract year from the href attribute
             currentYear = int(href.split('ZA')[1].split('.')[0])
-            
             # Step 4: Make requests for each year from 2024 to 1964
-            for year in range(currentYear, 1963, -1):
+            for year in range(currentYear, 1936, -1):
                 url = f'https://www.joradp.dz/JRN/ZA{year}.htm'
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
@@ -33,7 +33,8 @@ class JoradpSpider(scrapy.Spider):
 
     def parse_year(self, response):
         # Step 5: Extract options for the current year
-        options = response.css('form[name="zFrm2"] select[name="znjo"] option')
+        options = response.css(
+            'form[name="zFrm2"] select[name="znjo"] option[value]:not(:empty)')
         year = response.meta['year']
         year_data = {year: [option.attrib['value'] for option in options]}
 
@@ -42,4 +43,5 @@ class JoradpSpider(scrapy.Spider):
             f.write(f'{year_data}\n')
 
         # Step 6: Print the data structure
+
         self.log(year_data)
