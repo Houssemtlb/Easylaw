@@ -1,9 +1,22 @@
 import scrapy
+from scrapy import signals
+import requests
+from tqdm import tqdm
+import os
 
 
 class JoradpSpider(scrapy.Spider):
+    data = {}
     name = 'joradp'
     start_urls = ['https://www.joradp.dz/HAR/Index.htm']
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super(JoradpSpider, cls).from_crawler(
+            crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed,
+                                signal=signals.spider_closed)
+        return spider
 
     def parse(self, response):
         # Step 2: Extract href attribute from the specified element
@@ -13,7 +26,7 @@ class JoradpSpider(scrapy.Spider):
             # Step 3: Extract year from the href attribute
             currentYear = int(href.split('ZA')[1].split('.')[0])
             # Step 4: Make requests for each year from 2024 to 1964
-            for year in range(currentYear, 1936, -1):
+            for year in range(currentYear, 1963, -1):
                 url = f'https://www.joradp.dz/JRN/ZA{year}.htm'
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
@@ -32,16 +45,40 @@ class JoradpSpider(scrapy.Spider):
                 yield scrapy.Request(url, headers=headers, callback=self.parse_year, meta={'year': year})
 
     def parse_year(self, response):
-        # Step 5: Extract options for the current year
         options = response.css(
             'form[name="zFrm2"] select[name="znjo"] option[value]:not(:empty)')
         year = response.meta['year']
         year_data = {year: [option.attrib['value'] for option in options]}
+        self.data.update(year_data)
 
-        # Write data to a file
-        with open('output.txt', 'a') as f:
-            f.write(f'{year_data}\n')
+    def spider_closed(self, spider):
+        base_url = "https://www.joradp.dz/FTP/JO-ARABE/"
+        self.data = dict(sorted(self.data.items()))
+        with open('pdf_numbers.txt', 'w') as f:
+            f.write(f'{self.data}\n')
 
-        # Step 6: Print the data structure
+        for year, numbers in self.data.items():
+            max = numbers[0]
+            for number in tqdm(numbers, desc=f"Downloading PDFs for {year}"):
+                if int(max) > 99:
+                    pdf_url = f"{base_url}{year}/A{year}{number}.pdf"
+                else:
+                    pdf_url = f"{base_url}{year}/A{year}0{number}.pdf"
 
-        self.log(year_data)
+                response = requests.get(pdf_url, stream=True)
+
+                if response.status_code == 200:
+                    local_directory = f"joradp_pdfs/{year}"
+                    local_file_path = f"{local_directory}/{year}_{number}.pdf"
+
+                    # Create directory if it doesn't exist
+                    os.makedirs(local_directory, exist_ok=True)
+
+                    with open(local_file_path, 'wb') as pdf_file:
+                        for chunk in response.iter_content(chunk_size=128):
+                            pdf_file.write(chunk)
+
+                    print(f"Downloaded: {year}_{number}.pdf")
+                else:
+                    print(
+                        f"Failed to download {year}_{number}.pdf. Status Code: {response.status_code}")
