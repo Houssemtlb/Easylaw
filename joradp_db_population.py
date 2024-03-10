@@ -7,6 +7,21 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+arabic_months = {
+    'يناير': 1,
+    'فبراير': 2,
+    'مارس': 3,
+    'أبريل': 4,
+    'مايو': 5,
+    'يونيو': 6,
+    'يوليو': 7,
+    'أغسطس': 8,
+    'سبتمبر': 9,
+    'أكتوبر': 10,
+    'نوفمبر': 11,
+    'ديسمبر': 12
+}
+
 i = 0
 j = 0
 while (i <= 335):
@@ -74,7 +89,7 @@ while (i <= 335):
         irsal_link.click()
 
         lawTexts = []
-        object = {journalYear: '', journalDay: '', journalMonth:'', journalNum: '', journalPage: '', singatureDay: '', singatureMonth: '', singatureYear: '', ministry: '', content: ''}
+        object = {'journalYear': '', 'journalDay': '', 'journalMonth':'', 'journalNum': '', 'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
         matching_rows = driver.find_elements(By.XPATH, '//tr[@bgcolor="#78a7b9"]')
         # Iterate through the matching rows
         for row in matching_rows:
@@ -87,29 +102,55 @@ while (i <= 335):
                 object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups()
 
             # Get the next four tr elements using following-sibling
-            next_four_tr_elements = row.find_elements(By.XPATH, 'following-sibling::tr[position()<5]')
-            
-            var1 = next_four_tr_elements[0].text
-            # Define the regular expression pattern
-            pattern = r'في (\d+ [^\s]+ \d+)'
-            # Use re.search to find the match
-            match = re.search(pattern, var1)
-            # Check if there is a match and extract the result
-            if match:
-                object['singatureDay'], object['singatureMonth'], object['singatureYear'] = match.groups()
-            
-            object['ministry'] = next_four_tr_elements[1].text
-            
-            date = next_four_tr_elements[2].text
-            # Define the regular expression pattern
-            pattern = r'في (.*?)،'
-            # Use re.search to find the match
-            match = re.search(pattern, date)
-            # Check if there is a match and extract the result
-            if match:
-                object['journalDay'], object['journalMonth'], _ = match.groups()
-            
-            object['content'] = next_four_tr_elements[3].text
+            next_tr_elements = row.find_elements(By.XPATH, 'following-sibling::tr[position()<5]')
+
+            if (len(next_tr_elements) == 3):
+                var1 = next_tr_elements[0].text
+                # Define the regular expression pattern
+                pattern = r'في (\d+ [^\s]+ \d+)'
+                # Use re.search to find the match
+                match = re.search(pattern, var1)
+                # Check if there is a match and extract the result
+                if match:
+                    object['singatureDay'], singatureMonth, object['singatureYear'] = match.groups()
+                    object['singatureMonth'] = arabic_months[singatureMonth]                
+                
+                date = next_tr_elements[1].text
+                # Define the regular expression pattern
+                pattern = r'في (.*?)،'
+                # Use re.search to find the match
+                match = re.search(pattern, date)
+                # Check if there is a match and extract the result
+                if match:
+                    object['journalDay'], journalMonth, _ = match.groups()
+                    object['journalMonth'] = arabic_months[journalMonth]
+                
+                object['content'] = next_tr_elements[2].text
+
+            else: 
+                var1 = next_tr_elements[0].text
+                # Define the regular expression pattern
+                pattern = r'في (\d+ [^\s]+ \d+)'
+                # Use re.search to find the match
+                match = re.search(pattern, var1)
+                # Check if there is a match and extract the result
+                if match:
+                    object['singatureDay'], singatureMonth, object['singatureYear'] = match.groups()
+                    object['singatureMonth'] = arabic_months[singatureMonth]
+                object['ministry'] = next_tr_elements[1].text
+                
+                date = next_tr_elements[2].text
+                # Define the regular expression pattern
+                pattern = r'في (.*?)،'
+                # Use re.search to find the match
+                match = re.search(pattern, date)
+                # Check if there is a match and extract the result
+                if match:
+                    object['journalDay'], journalMonth, _ = match.groups()
+                    object['journalMonth'] = arabic_months[journalMonth]
+
+                
+                object['content'] = next_tr_elements[3].text
             
             lawTexts.append(object.copy())
 
