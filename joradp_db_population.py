@@ -8,7 +8,7 @@ from selenium.common.exceptions import TimeoutException
 
 i = 0
 j = 0
-while (i <= 334):
+while (i <= 335):
     i = 0
     print(f"TRY NUMBER {j + 1} !!!")
     try:
@@ -72,13 +72,13 @@ while (i <= 334):
         )
         irsal_link.click()
 
-        while (i <= 334):
+        while (i <= 335):
             next_page_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
             )
             next_page_button.click()
-            time.sleep(3)
+            time.sleep(10)
             i += 1
             print(i)
     except TimeoutException as e:
