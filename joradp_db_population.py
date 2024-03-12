@@ -136,7 +136,7 @@ while (i <= 335):
                     object['content'] = next_four_tr_elements[3].text
                     lawTexts.append(object.copy())
 
-                except ValueError as ve:
+                except (ValueError, IndexError) as e:
                     # Get the next four tr elements using following-sibling
                     next_three_tr_elements = row.find_elements(
                         By.XPATH, 'following-sibling::tr[position()<5]')
