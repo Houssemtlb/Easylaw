@@ -15,7 +15,7 @@ arabic_months = {
     'مايو': 5,
     'يونيو': 6,
     'يوليو': 7,
-    'أغسطس': 8,
+    'غشت': 8,
     'سبتمبر': 9,
     'أكتوبر': 10,
     'نوفمبر': 11,
@@ -114,11 +114,13 @@ while (i <= 335):
                     pattern = r'في (\d+ [^\s]+ \d+)'
                     # Use re.search to find the match
                     match = re.search(pattern, var1)
+                    print(var1)
+                    print(match.group(1))
                     # Check if there is a match and extract the result
                     if match:
                         full_date_str = match.group(1)
-                        object['singatureDay'], object['singatureMonth'], object['singatureYear'] = full_date_str.split(
-                        )
+                        object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
+                        object['singatureMonth'] = arabic_months[singatureMonth]
 
                     object['ministry'] = next_four_tr_elements[1].text
 
@@ -130,13 +132,13 @@ while (i <= 335):
                     # Check if there is a match and extract the result
                     if match:
                         jornal_date_str = match.group(1)
-                        object['journalDay'], object['journalMonth'], _ = jornal_date_str.split(
-                        )
+                        object['journalDay'], journalMonth, _ = jornal_date_str.split()
+                        object['journalMonth'] = arabic_months[journalMonth]
 
                     object['content'] = next_four_tr_elements[3].text
                     lawTexts.append(object.copy())
 
-                except (ValueError, IndexError) as e:
+                except (ValueError, IndexError, KeyError) as e:
                     # Get the next four tr elements using following-sibling
                     next_three_tr_elements = row.find_elements(
                         By.XPATH, 'following-sibling::tr[position()<5]')
@@ -148,8 +150,8 @@ while (i <= 335):
                     # Check if there is a match and extract the result
                     if match:
                         full_date_str = match.group(1)
-                        object['singatureDay'], object['singatureMonth'], object['singatureYear'] = full_date_str.split(
-                        )
+                        object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
+                        object['singatureMonth'] = arabic_months[singatureMonth]
                     date = next_three_tr_elements[1].text
                     # Define the regular expression pattern
                     pattern = r'في (.*?)،'
@@ -158,8 +160,9 @@ while (i <= 335):
                     # Check if there is a match and extract the result
                     if match:
                         jornal_date_str = match.group(1)
-                        object['journalDay'], object['journalMonth'], _ = jornal_date_str.split(
-                        )
+                        object['journalDay'], journalMonth, _ = jornal_date_str.split()
+                        object['journalMonth'] = arabic_months[journalMonth]
+
                     object['content'] = next_three_tr_elements[2].text
                     lawTexts.append(object.copy())
             print(lawTexts)
