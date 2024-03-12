@@ -26,6 +26,7 @@ i = 0
 j = 0
 while (i <= 335):
     i = 0
+    lawTexts = []
     print(f"TRY NUMBER {j + 1} !!!")
     try:
         driver = webdriver.Firefox()
@@ -88,23 +89,22 @@ while (i <= 335):
         )
         irsal_link.click()
 
-        lawTexts = []
-        object = {'journalYear': '', 'journalDay': '', 'journalMonth':'', 'journalNum': '', 'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
-        matching_rows = driver.find_elements(By.XPATH, '//tr[@bgcolor="#78a7b9"]')
-        # Iterate through the matching rows
-        for row in matching_rows:
-            # Find the a element within the current row
-            link_element = row.find_element(By.XPATH,'.//td[2]/a')
-            # Get the href attribute value and append it to the array
-            href_value = link_element.get_attribute('href')
-            page = re.search(r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
-            if page:
-                object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups()
+        while (i <= 335):
+            object = {'journalYear': '', 'journalDay': '', 'journalMonth':'', 'journalNum': '', 'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
+            matching_rows = driver.find_elements(By.XPATH, '//tr[@bgcolor="#78a7b9"]')
+            # Iterate through the matching rows
+            for row in matching_rows:
+                # Find the a element within the current row
+                link_element = row.find_element(By.XPATH,'.//td[2]/a')
+                # Get the href attribute value and append it to the array
+                href_value = link_element.get_attribute('href')
+                page = re.search(r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
+                if page:
+                    object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups()
 
-            # Get the next four tr elements using following-sibling
-            next_tr_elements = row.find_elements(By.XPATH, 'following-sibling::tr[position()<5]')
+                # Get the next four tr elements using following-sibling
+                next_tr_elements = row.find_elements(By.XPATH, 'following-sibling::tr[position()<5]')
 
-            if (len(next_tr_elements) == 3):
                 var1 = next_tr_elements[0].text
                 # Define the regular expression pattern
                 pattern = r'في (\d+ [^\s]+ \d+)'
@@ -112,49 +112,27 @@ while (i <= 335):
                 match = re.search(pattern, var1)
                 # Check if there is a match and extract the result
                 if match:
+                    full_date_str = match.group(1)
                     object['singatureDay'], singatureMonth, object['singatureYear'] = match.groups()
                     object['singatureMonth'] = arabic_months[singatureMonth]                
                 
-                date = next_tr_elements[1].text
+                object['ministry'] = next_tr_elements[1].text if (len(next_tr_elements) == 4) else ''
+                
+                date = next_tr_elements[2 if (len(next_tr_elements) == 4) else 1].text
                 # Define the regular expression pattern
                 pattern = r'في (.*?)،'
                 # Use re.search to find the match
                 match = re.search(pattern, date)
                 # Check if there is a match and extract the result
                 if match:
+                    jornal_date_str = match.group(1)
                     object['journalDay'], journalMonth, _ = match.groups()
                     object['journalMonth'] = arabic_months[journalMonth]
-                
-                object['content'] = next_tr_elements[2].text
-
-            else: 
-                var1 = next_tr_elements[0].text
-                # Define the regular expression pattern
-                pattern = r'في (\d+ [^\s]+ \d+)'
-                # Use re.search to find the match
-                match = re.search(pattern, var1)
-                # Check if there is a match and extract the result
-                if match:
-                    object['singatureDay'], singatureMonth, object['singatureYear'] = match.groups()
-                    object['singatureMonth'] = arabic_months[singatureMonth]
-                object['ministry'] = next_tr_elements[1].text
-                
-                date = next_tr_elements[2].text
-                # Define the regular expression pattern
-                pattern = r'في (.*?)،'
-                # Use re.search to find the match
-                match = re.search(pattern, date)
-                # Check if there is a match and extract the result
-                if match:
-                    object['journalDay'], journalMonth, _ = match.groups()
-                    object['journalMonth'] = arabic_months[journalMonth]
-
                 
                 object['content'] = next_tr_elements[3].text
-            
-            lawTexts.append(object.copy())
-
-        while (i <= 335):
+                
+                lawTexts.append(object.copy())
+            print(len(lawTexts))
             next_page_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
