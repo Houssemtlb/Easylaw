@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 
 arabic_months = {
     'يناير': 1,
@@ -119,10 +120,25 @@ while (i <= number_of_pages):
                     object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups(
                     )
                 try:
-                    # Get the next four tr elements using following-sibling
-                    next_four_tr_elements = row.find_elements(
-                        By.XPATH, 'following-sibling::tr[position()<5]')
-                    var1 = next_four_tr_elements[0].text
+                    
+                    next_siblings = []
+                    current_element = row
+                    while True:
+                        try:
+                            # Attempt to find the immediately following sibling
+                            following_sibling = current_element.find_element(By.XPATH, 'following-sibling::tr[1]')
+                            # Check if the following sibling has the bgcolor attribute set to "#78a7b9"
+                            if following_sibling.get_attribute('bgcolor') == "#78a7b9":
+                                # If it has, we've reached the next row of interest, so stop the loop
+                                break
+                            else:
+                                # If it hasn't, add this sibling to the list and set it as the current element for the next iteration
+                                next_siblings.append(following_sibling)
+                                current_element = following_sibling
+                        except NoSuchElementException:
+                            # If no following sibling is found, end the loop
+                            break
+                    var1 = next_siblings[0].text
                     # Define the regular expression pattern
                     pattern = r'في (\d+ [^\s]+ \d+)'
                     # Use re.search to find the match
@@ -133,9 +149,9 @@ while (i <= number_of_pages):
                         object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
                         object['singatureMonth'] = arabic_months[singatureMonth]
 
-                    object['ministry'] = next_four_tr_elements[1].text
+                    object['ministry'] = next_siblings[1].text
 
-                    date = next_four_tr_elements[2].text
+                    date = next_siblings[2].text
                     # Define the regular expression pattern
                     pattern = r'في (.*?)،'
                     # Use re.search to find the match
@@ -146,14 +162,11 @@ while (i <= number_of_pages):
                         object['journalDay'], journalMonth, _ = jornal_date_str.split()
                         object['journalMonth'] = arabic_months[journalMonth]
 
-                    object['content'] = next_four_tr_elements[3].text
+                    object['content'] = next_siblings[3].text
                     lawTexts.append(object.copy())
 
                 except (ValueError, IndexError) as e:
-                    # Get the next four tr elements using following-sibling
-                    next_three_tr_elements = row.find_elements(
-                        By.XPATH, 'following-sibling::tr[position()<5]')
-                    var1 = next_three_tr_elements[0].text
+                    var1 = next_siblings[0].text
                     # Define the regular expression pattern
                     pattern = r'في (\d+ [^\s]+ \d+)'
                     # Use re.search to find the match
@@ -163,7 +176,7 @@ while (i <= number_of_pages):
                         full_date_str = match.group(1)
                         object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
                         object['singatureMonth'] = arabic_months[singatureMonth]
-                    date = next_three_tr_elements[1].text
+                    date = next_siblings[1].text
                     # Define the regular expression pattern
                     pattern = r'في (.*?)،'
                     # Use re.search to find the match
@@ -174,7 +187,7 @@ while (i <= number_of_pages):
                         object['journalDay'], journalMonth, _ = jornal_date_str.split()
                         object['journalMonth'] = arabic_months[journalMonth]
 
-                    object['content'] = next_three_tr_elements[2].text
+                    object['content'] = next_siblings[2].text
                     lawTexts.append(object.copy())
             print(lawTexts)
             print(len(lawTexts))
