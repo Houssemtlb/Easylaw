@@ -102,7 +102,7 @@ for law_type in law_types:
             # Switch to the frame with name="FnCli"
             driver.switch_to.frame(driver.find_element(
                 By.XPATH, '//frame[@name="FnCli"]'))
-            
+
             # Find the input field and enter '01/01/1964'
             select_input = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.NAME, 'znat'))
@@ -155,14 +155,14 @@ for law_type in law_types:
                 number_of_laws = match.group(1)
 
             number_of_pages = int(int(number_of_laws) / 200) - 1
-            
+
             while (i <= number_of_pages):
                 matching_rows = driver.find_elements(
                     By.XPATH, '//tr[@bgcolor="#78a7b9"]')
                 # Iterate through the matching rows
                 for row in matching_rows:
                     object = {'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
-                            'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
+                              'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
                     # Find the a element within the current row
                     link_element = row.find_element(By.XPATH, './/td[2]/a')
                     # Get the href attribute value and append it to the array
@@ -182,9 +182,20 @@ for law_type in law_types:
                         # Use re.search to find the match
                         match = re.search(pattern, var1)
                         # Check if there is a match and extract the result
+                        object['textType'] = law_type
+
+                        pattern = r'رقم (\S+)'
+                        match = re.search(pattern, var1)
+                        if match:
+                            textNumber = match.group(1)
+                        else:
+                            textNumber = ""
+                        object['textNumber'] = textNumber
+
                         if match:
                             full_date_str = match.group(1)
-                            object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
+                            object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split(
+                            )
                             object['singatureMonth'] = arabic_months[singatureMonth]
 
                         object['ministry'] = next_four_tr_elements[1].text
@@ -215,7 +226,8 @@ for law_type in law_types:
                         # Check if there is a match and extract the result
                         if match:
                             full_date_str = match.group(1)
-                            object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
+                            object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split(
+                            )
                             object['singatureMonth'] = arabic_months[singatureMonth]
                         date = next_three_tr_elements[1].text
                         # Define the regular expression pattern
