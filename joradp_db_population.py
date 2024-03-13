@@ -21,10 +21,10 @@ arabic_months = {
     'نوفمبر': 11,
     'ديسمبر': 12
 }
-
+number_of_pages = 0
 i = 0
 j = 0
-while (i <= 335):
+while (i <= number_of_pages):
     i = 0
     lawTexts = []
     print(f"TRY NUMBER {j + 1} !!!")
@@ -89,7 +89,20 @@ while (i <= 335):
         )
         irsal_link.click()
 
-        while (i <= 335):
+        numberOfPages = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="tex"]'))
+        )
+        number_of_pages_text = numberOfPages.text
+        pattern = r"العدد (\d+)"
+        match = re.search(pattern, number_of_pages_text)
+
+        number_of_laws = 0
+        if match:
+            number_of_laws = match.group(1)
+
+        number_of_pages = int(int(number_of_laws) / 200) - 1
+        
+        while (i <= number_of_pages):
             matching_rows = driver.find_elements(
                 By.XPATH, '//tr[@bgcolor="#78a7b9"]')
             # Iterate through the matching rows
@@ -114,8 +127,6 @@ while (i <= 335):
                     pattern = r'في (\d+ [^\s]+ \d+)'
                     # Use re.search to find the match
                     match = re.search(pattern, var1)
-                    print(var1)
-                    print(match.group(1))
                     # Check if there is a match and extract the result
                     if match:
                         full_date_str = match.group(1)
