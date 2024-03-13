@@ -108,7 +108,7 @@ while (i <= number_of_pages):
                 By.XPATH, '//tr[@bgcolor="#78a7b9"]')
             # Iterate through the matching rows
             for row in matching_rows:
-                object = {'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
+                object = {'id': -1,'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
                           'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
                 # Find the a element within the current row
                 link_element = row.find_element(By.XPATH, './/td[2]/a')
@@ -119,25 +119,65 @@ while (i <= number_of_pages):
                 if page:
                     object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups(
                     )
-                try:
-                    
-                    next_siblings = []
-                    current_element = row
-                    while True:
-                        try:
-                            # Attempt to find the immediately following sibling
-                            following_sibling = current_element.find_element(By.XPATH, 'following-sibling::tr[1]')
-                            # Check if the following sibling has the bgcolor attribute set to "#78a7b9"
-                            if following_sibling.get_attribute('bgcolor') == "#78a7b9":
-                                # If it has, we've reached the next row of interest, so stop the loop
-                                break
-                            else:
-                                # If it hasn't, add this sibling to the list and set it as the current element for the next iteration
-                                next_siblings.append(following_sibling)
-                                current_element = following_sibling
-                        except NoSuchElementException:
-                            # If no following sibling is found, end the loop
+
+                id_element = row.find_element(By.XPATH, './/td[1]/a')
+                id_element_href = id_element.get_attribute("href")
+                match = re.search(r'#(\d+)', id_element_href)
+                id_number = match.group(1)
+                object['id'] = id_number
+
+                next_siblings = []
+                current_element = row
+                while True:
+                    assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
+                    association = ""
+                    try:
+                        # Attempt to find the immediately following sibling
+                        following_sibling = current_element.find_element(By.XPATH, 'following-sibling::tr[1]')
+                        # Check if the following sibling has the bgcolor attribute set to "#78a7b9"
+                        if following_sibling.get_attribute('bgcolor') == "#78a7b9":
+                            print(assocObject)
+                            # If it has, we've reached the next row of interest, so stop the loop
                             break
+                        try:
+                            # Attempt to find the element
+                            law_td = following_sibling.find_element(By.XPATH, './/td[1]')
+                            marg = law_td.get_attribute("colspan")
+                            if (marg == 2):
+                                law_td = following_sibling.find_element(By.XPATH, './/td[3]')
+                                color = law_td.get_attribute("bgcolor")
+                                if (color == "#9ec7d7"):
+                                    id_element = row.find_element(By.XPATH, './/td[2]/a')
+                                    id_element_href = id_element.get_attribute("href")
+                                    match = re.search(r'#(\d+)', id_element_href)
+                                    id_number = -1
+                                    if match:
+                                        id_number = match.group(1)
+                                        assocObject["idsIn"].append(id_number)
+                        except NoSuchElementException:
+                            try:
+                                assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
+                                association = ""
+                                assoc_td = following_sibling.find_element(By.XPATH, './/td[2]')
+                                marg = assoc_td.get_attribute("colspan")
+                                if (marg == "5"):
+                                    assoc = following_sibling.find_element(By.XPATH, './/td[2]/font')
+                                    # If the element is found
+                                    association = assoc.text
+                                    assocObject["assoc"] = association
+                            except NoSuchElementException:
+                                law_td = following_sibling.find_element(By.XPATH, './/td[1]')
+                                marg = law_td.get_attribute("colspan")
+                                if (marg == 6):
+                                    next_siblings.append(following_sibling)
+                    except NoSuchElementException:
+                        # the last element in the page
+                        break
+                    current_element = following_sibling
+                
+                print(len(next_siblings))
+
+                if(len(next_siblings) == 4):
                     var1 = next_siblings[0].text
                     # Define the regular expression pattern
                     pattern = r'في (\d+ [^\s]+ \d+)'
@@ -165,7 +205,7 @@ while (i <= number_of_pages):
                     object['content'] = next_siblings[3].text
                     lawTexts.append(object.copy())
 
-                except (ValueError, IndexError) as e:
+                elif (len(next_siblings) == 3):
                     var1 = next_siblings[0].text
                     # Define the regular expression pattern
                     pattern = r'في (\d+ [^\s]+ \d+)'
@@ -189,8 +229,10 @@ while (i <= number_of_pages):
 
                     object['content'] = next_siblings[2].text
                     lawTexts.append(object.copy())
-            print(lawTexts)
-            print(len(lawTexts))
+                else:
+                    print("ERROR")
+#            print(lawTexts)
+ #           print(len(lawTexts))
             next_page_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
