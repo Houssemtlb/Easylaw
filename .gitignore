@@ -1,3 +1,5 @@
 __pycashe__
 *.pyc
 joradp_pdfs
+.ipynb_checkpoints
+*.ipynb
