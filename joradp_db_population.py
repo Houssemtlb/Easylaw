@@ -23,7 +23,7 @@ arabic_months = {
     'ديسمبر': 12
 }
 
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 
 # Open the website
 driver.get('https://www.joradp.dz/HAR/Index.htm')
@@ -75,7 +75,7 @@ for law_type in law_types:
         lawTexts = []
         print(f"TRY NUMBER {j + 1} !!!")
         try:
-            driver = webdriver.Firefox()
+            driver = webdriver.Chrome()
 
             # Open the website
             driver.get('https://www.joradp.dz/HAR/Index.htm')
@@ -137,7 +137,7 @@ for law_type in law_types:
             pages_input.clear()
             pages_input.send_keys('200')
 
-            irsal_link = WebDriverWait(driver, 10).until(
+            irsal_link = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, '/html/body/div/form/table[2]/tbody/tr[1]/td/a'))
             )
@@ -177,13 +177,8 @@ for law_type in law_types:
                         next_four_tr_elements = row.find_elements(
                             By.XPATH, 'following-sibling::tr[position()<5]')
                         var1 = next_four_tr_elements[0].text
-                        # Define the regular expression pattern
-                        pattern = r'في (\d+ [^\s]+ \d+)'
-                        # Use re.search to find the match
-                        match = re.search(pattern, var1)
                         # Check if there is a match and extract the result
                         object['textType'] = law_type
-
                         pattern = r'رقم (\S+)'
                         match = re.search(pattern, var1)
                         if match:
@@ -192,6 +187,10 @@ for law_type in law_types:
                             textNumber = ""
                         object['textNumber'] = textNumber
 
+                        # Define the regular expression pattern
+                        pattern = r'في (\d+ [^\s]+ \d+)'
+                        # Use re.search to find the match
+                        match = re.search(pattern, var1)
                         if match:
                             full_date_str = match.group(1)
                             object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split(
@@ -199,17 +198,18 @@ for law_type in law_types:
                             object['singatureMonth'] = arabic_months[singatureMonth]
 
                         object['ministry'] = next_four_tr_elements[1].text
-
                         date = next_four_tr_elements[2].text
                         # Define the regular expression pattern
-                        pattern = r'في (.*?)،'
+                        pattern = r'في (\d+) (\S+) (\d+)'
                         # Use re.search to find the match
                         match = re.search(pattern, date)
-                        # Check if there is a match and extract the result
                         if match:
-                            jornal_date_str = match.group(1)
-                            object['journalDay'], journalMonth, _ = jornal_date_str.split()
-                            object['journalMonth'] = arabic_months[journalMonth]
+                            day = match.group(1)
+                            month = match.group(2)
+                            if day and month:  # Check if day and month are not empty
+                                object['journalDay'] = day
+                                object['journalMonth'] = arabic_months[month]
+                        
 
                         object['content'] = next_four_tr_elements[3].text
                         lawTexts.append(object.copy())
@@ -217,33 +217,49 @@ for law_type in law_types:
                     except (ValueError, IndexError) as e:
                         # Get the next four tr elements using following-sibling
                         next_three_tr_elements = row.find_elements(
-                            By.XPATH, 'following-sibling::tr[position()<5]')
-                        var1 = next_three_tr_elements[0].text
+                            By.XPATH, 'following-sibling::tr[position()<4]')
+                        var1 = next_four_tr_elements[0].text
+                        # Check if there is a match and extract the result
+                        object['textType'] = law_type
+                        pattern = r'رقم (\S+)'
+                        match = re.search(pattern, var1)
+                        if match:
+                            textNumber = match.group(1)
+                        else:
+                            textNumber = ""
+                        object['textNumber'] = textNumber
+
                         # Define the regular expression pattern
                         pattern = r'في (\d+ [^\s]+ \d+)'
                         # Use re.search to find the match
                         match = re.search(pattern, var1)
-                        # Check if there is a match and extract the result
                         if match:
                             full_date_str = match.group(1)
                             object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split(
                             )
                             object['singatureMonth'] = arabic_months[singatureMonth]
-                        date = next_three_tr_elements[1].text
+                            
+                        date = next_four_tr_elements[1].text
                         # Define the regular expression pattern
-                        pattern = r'في (.*?)،'
+                        pattern = r'في (\d+) (\S+) (\d+)'
                         # Use re.search to find the match
                         match = re.search(pattern, date)
-                        # Check if there is a match and extract the result
                         if match:
-                            jornal_date_str = match.group(1)
-                            object['journalDay'], journalMonth, _ = jornal_date_str.split()
-                            object['journalMonth'] = arabic_months[journalMonth]
+                            day = match.group(1)
+                            month = match.group(2)
+                            if day and month:  # Check if day and month are not empty
+                                object['journalDay'] = day
+                                object['journalMonth'] = arabic_months[month]
+                            
+                            print(object['journalMonth'])
+                            print(object['journalDay'])
 
+                        object['ministry'] = ''
                         object['content'] = next_three_tr_elements[2].text
                         lawTexts.append(object.copy())
                 print(lawTexts)
-                print(len(lawTexts))
+                
+                #print(len(lawTexts))
                 next_page_button = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable(
                         (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
