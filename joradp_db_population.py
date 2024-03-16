@@ -148,12 +148,16 @@ for law_type in law_types:
                 number_of_laws = match.group(1)
 
             number_of_pages = int(int(number_of_laws) / 200) - 1
-            
-            while (i <= number_of_pages):
+            #while (i <= number_of_pages):
+            # for test:
+            while (i <= 200):
                 matching_rows = driver.find_elements(
                     By.XPATH, '//tr[@bgcolor="#78a7b9"]')
                 # Iterate through the matching rows
+                rrr = 0
                 for row in matching_rows:
+                    rrr += 1
+                    print("row: ", rrr)
                     object = {'id': -1,'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
                             'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
                     # Find the a element within the current row
@@ -174,54 +178,124 @@ for law_type in law_types:
 
                     next_siblings = []
                     current_element = row
-                    while True:
-                        assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
-                        association = ""
-                        try:
-                            # Attempt to find the immediately following sibling
-                            following_sibling = current_element.find_element(By.XPATH, 'following-sibling::tr[1]')
-                            # Check if the following sibling has the bgcolor attribute set to "#78a7b9"
-                            if following_sibling.get_attribute('bgcolor') == "#78a7b9":
-                                print(assocObject)
-                                # If it has, we've reached the next row of interest, so stop the loop
-                                break
+                    assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
+                    rr = 0
+                    with open('logs.txt', 'w') as file:
+                        while True:
+                            rr += 1
+                            print("Loop iteration:", rr)
+                            log_line = f"Loop iteration: {rr}\n"
+                            file.write(log_line)
+
                             try:
-                                # Attempt to find the element
-                                law_td = following_sibling.find_element(By.XPATH, './/td[1]')
-                                marg = law_td.get_attribute("colspan")
-                                if (marg == 2):
-                                    law_td = following_sibling.find_element(By.XPATH, './/td[3]')
-                                    color = law_td.get_attribute("bgcolor")
-                                    if (color == "#9ec7d7"):
-                                        id_element = row.find_element(By.XPATH, './/td[2]/a')
-                                        id_element_href = id_element.get_attribute("href")
-                                        match = re.search(r'#(\d+)', id_element_href)
-                                        id_number = -1
-                                        if match:
-                                            id_number = match.group(1)
-                                            assocObject["idsIn"].append(id_number)
-                            except NoSuchElementException:
-                                try:
-                                    assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
-                                    association = ""
-                                    assoc_td = following_sibling.find_element(By.XPATH, './/td[2]')
-                                    marg = assoc_td.get_attribute("colspan")
-                                    if (marg == "5"):
-                                        assoc = following_sibling.find_element(By.XPATH, './/td[2]/font')
-                                        # If the element is found
-                                        association = assoc.text
-                                        assocObject["assoc"] = association
-                                except NoSuchElementException:
+                                following_sibling = current_element.find_element(By.XPATH, 'following-sibling::tr[1]')
+                                print("Following sibling found")
+                                log_line = f"Following sibling found\n"
+                                file.write(log_line)
+
+                                sibling_bgcolor = following_sibling.get_attribute('bgcolor')
+                                print(f"Sibling bgcolor: {sibling_bgcolor}")
+                                log_line = f"Sibling bgcolor: {sibling_bgcolor}\n"
+                                file.write(log_line)
+
+
+                                if (sibling_bgcolor == "#78a7b9"):
+                                    print("Next law found")
+                                    log_line = f"Next law found\n"
+                                    file.write(log_line)
+
+                                    log_line = f"assocObject: {assocObject}\n"
+                                    file.write(log_line)
+
+                                    print("assocObject:", assocObject)
+                                    break
+                                else:
                                     law_td = following_sibling.find_element(By.XPATH, './/td[1]')
                                     marg = law_td.get_attribute("colspan")
-                                    if (marg == 6):
+                                    print(f"Colspan for law_td: {marg}")
+                                    log_line = f"Colspan for law_td: {marg}\n"
+                                    file.write(log_line)
+
+                                    if (marg == "6"):
                                         next_siblings.append(following_sibling)
-                        except NoSuchElementException:
-                            # the last element in the page
-                            break
+                                        print("Added to next_siblings")
+                                        log_line = f"Added to next_siblings\n"
+                                        file.write(log_line)
+                                    else:
+                                        assoc_td = following_sibling.find_element(By.XPATH, './/td[2]')
+                                        marg = assoc_td.get_attribute("colspan")
+                                        log_line = f"Colspan for assoc_td: {marg}\n"
+                                        file.write(log_line)
+                                        print(f"Colspan for assoc_td: {marg}")
+
+                                        if (marg == "5"):
+                                            assoc = following_sibling.find_element(By.XPATH, './/td[2]/font')
+                                            assocObject["assoc"] = assoc.text
+                                            print(f"Association text: {assoc.text}")
+                                            log_line = f"Association text: {assoc.text}\n"
+                                            file.write(log_line)
+                                            assocObject["idsIn"] = []
+                                        else:
+                                            law_td = following_sibling.find_element(By.XPATH, './/td[1]')
+                                            marg = law_td.get_attribute("colspan")
+                                            print(f"Colspan for law_td (2nd check): {marg}")
+                                            log_line = f"Colspan for law_td (2nd check): {marg}\n"
+                                            file.write(log_line)
+
+                                            if (marg == "2"):
+                                                try:
+                                                    law_td = following_sibling.find_element(By.XPATH, './/td[3]')
+                                                    color = law_td.get_attribute("bgcolor")
+                                                    print(f"Law_td bgcolor: {color}")
+                                                    log_line = f"Law_td bgcolor: {color}\n"
+                                                    file.write(log_line)
+
+                                                    if (color == "#9ec7d7"):
+                                                        id_element = row.find_element(By.XPATH, './/td[2]/a')
+                                                        id_element_href = id_element.get_attribute("href")
+                                                        print(f"Law ID href: {id_element_href}")
+                                                        log_line = f"Law ID href: {id_element_href}\n"
+                                                        file.write(log_line)
+
+                                                        match = re.search(r'#(\d+)', id_element_href)
+                                                        id_number = -1
+                                                        if match:
+                                                            id_number = match.group(1)
+                                                            assocObject["idsIn"].append(id_number)
+                                                            print(f"Law ID: {id_number}")
+                                                            log_line = f"Law ID: {id_number}\n"
+                                                            file.write(log_line)
+                                                        else:
+                                                            href_value = link_element.get_attribute('href')
+                                                            match = re.search(r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
+                                                            if match:
+                                                                object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups()
+                                                            print("Error finding law id!")
+                                                            log_line = f"Error finding law id!\n"
+                                                            file.write(log_line)
+
+                                                    else:
+                                                        print("Processing another law for the association")
+                                                        log_line = f"Processing another law for the association\n"
+                                                        file.write(log_line)
+                                                except NoSuchElementException:
+                                                    # association law data
+                                                    print("association law data")
+                                                    log_line = f"association law data\n"
+                                                    file.write(log_line)
+                                            else:
+                                                print("No matching conditions for association law")
+                                                log_line = f"No matching conditions for association law\n"
+                                                file.write(log_line)
+                            except Exception as e:
+                                log_line = f"Error in processing: {e}\n"
+                                file.write(log_line)
+                                print(f"Error in processing: {e}")
+
                         current_element = following_sibling
-                    
-                    print(len(next_siblings))
+                                        
+                        print("len(next_siblings): ", len(next_siblings))
+                        print("row", rrr)
 
                     if(len(next_siblings) == 4):
                         var1 = next_siblings[0].text
