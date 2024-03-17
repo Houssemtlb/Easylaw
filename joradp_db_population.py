@@ -103,6 +103,13 @@ for law_type in law_types:
             # Switch to the frame with name="FnCli"
             driver.switch_to.frame(driver.find_element(
                 By.XPATH, '//frame[@name="FnCli"]'))
+            
+            # select category
+            select_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, 'znat')))
+
+            select_object = Select(select_input)
+            select_object.select_by_visible_text(law_type)
 
             # Find the input field and enter '01/01/1964'
             date_input = WebDriverWait(driver, 10).until(
@@ -130,7 +137,7 @@ for law_type in law_types:
             pages_input.clear()
             pages_input.send_keys('200')
 
-            irsal_link = WebDriverWait(driver, 10).until(
+            irsal_link = WebDriverWait(driver, 30).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, '/html/body/div/form/table[2]/tbody/tr[1]/td/a'))
             )
