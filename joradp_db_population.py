@@ -148,49 +148,52 @@ for law_type in law_types:
                 number_of_laws = match.group(1)
 
             number_of_pages = int(int(number_of_laws) / 200) - 1
-            #while (i <= number_of_pages):
-            # for test:
-            while (i <= 200):
+            while (i <= number_of_pages):
                 matching_rows = driver.find_elements(
                     By.XPATH, '//tr[@bgcolor="#78a7b9"]')
                 # Iterate through the matching rows
-                rrr = 0
-                for row in matching_rows:
-                    rrr += 1
-                    print("row: ", rrr)
-                    object = {'id': -1,'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
-                            'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
-                    # Find the a element within the current row
-                    link_element = row.find_element(By.XPATH, './/td[2]/a')
-                    # Get the href attribute value and append it to the array
-                    href_value = link_element.get_attribute('href')
-                    page = re.search(
-                        r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
-                    if page:
-                        object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups(
-                        )
+                with open(f'.\\pages_scraping_logs\\page_{i}.txt', 'w', encoding='utf-8') as file:
+                    row_number = 0
+                    for row in matching_rows:
+                        allAssoc = []
+                        row_number += 1
+                        print("row: ", row_number)
+                        object = {'id': -1,'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
+                                'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
+                        # Find the a element within the current row
+                        link_element = row.find_element(By.XPATH, './/td[2]/a')
+                        # Get the href attribute value and append it to the array
+                        href_value = link_element.get_attribute('href')
+                        page = re.search(
+                            r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
+                        if page:
+                            object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups(
+                            )
 
-                    id_element = row.find_element(By.XPATH, './/td[1]/a')
-                    id_element_href = id_element.get_attribute("href")
-                    match = re.search(r'#(\d+)', id_element_href)
-                    id_number = match.group(1)
-                    object['id'] = id_number
+                        id_element = row.find_element(By.XPATH, './/td[1]/a')
+                        id_element_href = id_element.get_attribute("href")
+                        match = re.search(r'#(\d+)', id_element_href)
+                        id_number = match.group(1)
+                        object['id'] = id_number
 
-                    next_siblings = []
-                    current_element = row
-                    assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
-                    rr = 0
-                    with open('logs.txt', 'w') as file:
+                        next_siblings = []
+                        current_element = row
+                        assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
+                        sibling_number = 0
                         while True:
-                            rr += 1
-                            print("Loop iteration:", rr)
-                            log_line = f"Loop iteration: {rr}\n"
+                            sibling_number += 1
+                            print("----------------- \n Following sibling number:", sibling_number)
+                            log_line = f"----------------- \n Following sibling number: {sibling_number}\n"
                             file.write(log_line)
 
                             try:
                                 following_sibling = current_element.find_element(By.XPATH, 'following-sibling::tr[1]')
-                                print("Following sibling found")
-                                log_line = f"Following sibling found\n"
+                                print(" ----------------- \n Following sibling found")
+                                log_line = f" ----------------- \n Following sibling found\n"
+                                file.write(log_line)
+
+                                print(f"Following sibling Text: \n {following_sibling.text}\n")
+                                log_line = f"Following sibling Text: \n {following_sibling.text}\n"
                                 file.write(log_line)
 
                                 sibling_bgcolor = following_sibling.get_attribute('bgcolor')
@@ -200,14 +203,21 @@ for law_type in law_types:
 
 
                                 if (sibling_bgcolor == "#78a7b9"):
-                                    print("Next law found")
-                                    log_line = f"Next law found\n"
+                                    print("***********\n Next law found \n ***********\n**************\n")
+                                    log_line = f"***********\n Next law found\n ***********\n**************\n"
                                     file.write(log_line)
 
-                                    log_line = f"assocObject: {assocObject}\n"
-                                    file.write(log_line)
+                                    if (assocObject['assoc'] != ''):
+                                        log_line = f"assocObject: {assocObject}\n"
+                                        file.write(log_line)
+                                        print("assocObject:", assocObject)
 
-                                    print("assocObject:", assocObject)
+                                        allAssoc.append(assocObject)
+                                        log_line = f"All law Assoc: {allAssoc}\n"
+                                        file.write(log_line)
+                                        print("All law Assoc:", allAssoc)
+
+
                                     break
                                 else:
                                     law_td = following_sibling.find_element(By.XPATH, './/td[1]')
@@ -229,12 +239,23 @@ for law_type in law_types:
                                         print(f"Colspan for assoc_td: {marg}")
 
                                         if (marg == "5"):
+                                            if (assocObject['assoc'] != ''):
+                                                log_line = f"assocObject: {assocObject}\n"
+                                                file.write(log_line)
+                                                print("assocObject:", assocObject)
+                                                allAssoc.append(assocObject)
+                                                log_line = f"All law Assoc until now: {allAssoc}\n"
+                                                file.write(log_line)
+                                                print("All law Assoc until now:", allAssoc)
+
+
                                             assoc = following_sibling.find_element(By.XPATH, './/td[2]/font')
+                                            assocObject = {"assoc": "", "idOut": object['id'], "idsIn": []}
                                             assocObject["assoc"] = assoc.text
                                             print(f"Association text: {assoc.text}")
                                             log_line = f"Association text: {assoc.text}\n"
                                             file.write(log_line)
-                                            assocObject["idsIn"] = []
+
                                         else:
                                             law_td = following_sibling.find_element(By.XPATH, './/td[1]')
                                             marg = law_td.get_attribute("colspan")
@@ -251,7 +272,7 @@ for law_type in law_types:
                                                     file.write(log_line)
 
                                                     if (color == "#9ec7d7"):
-                                                        id_element = row.find_element(By.XPATH, './/td[2]/a')
+                                                        id_element = following_sibling.find_element(By.XPATH, './/td[2]/a')
                                                         id_element_href = id_element.get_attribute("href")
                                                         print(f"Law ID href: {id_element_href}")
                                                         log_line = f"Law ID href: {id_element_href}\n"
@@ -266,10 +287,6 @@ for law_type in law_types:
                                                             log_line = f"Law ID: {id_number}\n"
                                                             file.write(log_line)
                                                         else:
-                                                            href_value = link_element.get_attribute('href')
-                                                            match = re.search(r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
-                                                            if match:
-                                                                object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups()
                                                             print("Error finding law id!")
                                                             log_line = f"Error finding law id!\n"
                                                             file.write(log_line)
@@ -287,72 +304,75 @@ for law_type in law_types:
                                                 print("No matching conditions for association law")
                                                 log_line = f"No matching conditions for association law\n"
                                                 file.write(log_line)
+                            except NoSuchElementException:
+                                # the last element in the page
+                                break
                             except Exception as e:
                                 log_line = f"Error in processing: {e}\n"
                                 file.write(log_line)
                                 print(f"Error in processing: {e}")
 
-                        current_element = following_sibling
+                            current_element = following_sibling
                                         
                         print("len(next_siblings): ", len(next_siblings))
-                        print("row", rrr)
+                        print("row", row_number)
 
-                    if(len(next_siblings) == 4):
-                        var1 = next_siblings[0].text
-                        # Define the regular expression pattern
-                        pattern = r'في (\d+ [^\s]+ \d+)'
-                        # Use re.search to find the match
-                        match = re.search(pattern, var1)
-                        # Check if there is a match and extract the result
-                        if match:
-                            full_date_str = match.group(1)
-                            object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
-                            object['singatureMonth'] = arabic_months[singatureMonth]
+                        if(len(next_siblings) == 4):
+                            var1 = next_siblings[0].text
+                            # Define the regular expression pattern
+                            pattern = r'في (\d+ [^\s]+ \d+)'
+                            # Use re.search to find the match
+                            match = re.search(pattern, var1)
+                            # Check if there is a match and extract the result
+                            if match:
+                                full_date_str = match.group(1)
+                                object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
+                                object['singatureMonth'] = arabic_months[singatureMonth]
 
-                        object['ministry'] = next_siblings[1].text
+                            object['ministry'] = next_siblings[1].text
 
-                        date = next_siblings[2].text
-                        # Define the regular expression pattern
-                        pattern = r'في (.*?)،'
-                        # Use re.search to find the match
-                        match = re.search(pattern, date)
-                        # Check if there is a match and extract the result
-                        if match:
-                            jornal_date_str = match.group(1)
-                            object['journalDay'], journalMonth, _ = jornal_date_str.split()
-                            object['journalMonth'] = arabic_months[journalMonth]
+                            date = next_siblings[2].text
+                            # Define the regular expression pattern
+                            pattern = r'في (.*?)،'
+                            # Use re.search to find the match
+                            match = re.search(pattern, date)
+                            # Check if there is a match and extract the result
+                            if match:
+                                jornal_date_str = match.group(1)
+                                object['journalDay'], journalMonth, _ = jornal_date_str.split()
+                                object['journalMonth'] = arabic_months[journalMonth]
 
-                        object['content'] = next_siblings[3].text
-                        lawTexts.append(object.copy())
+                            object['content'] = next_siblings[3].text
+                            lawTexts.append(object.copy())
 
-                    elif (len(next_siblings) == 3):
-                        var1 = next_siblings[0].text
-                        # Define the regular expression pattern
-                        pattern = r'في (\d+ [^\s]+ \d+)'
-                        # Use re.search to find the match
-                        match = re.search(pattern, var1)
-                        # Check if there is a match and extract the result
-                        if match:
-                            full_date_str = match.group(1)
-                            object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
-                            object['singatureMonth'] = arabic_months[singatureMonth]
-                        date = next_siblings[1].text
-                        # Define the regular expression pattern
-                        pattern = r'في (.*?)،'
-                        # Use re.search to find the match
-                        match = re.search(pattern, date)
-                        # Check if there is a match and extract the result
-                        if match:
-                            jornal_date_str = match.group(1)
-                            object['journalDay'], journalMonth, _ = jornal_date_str.split()
-                            object['journalMonth'] = arabic_months[journalMonth]
+                        elif (len(next_siblings) == 3):
+                            var1 = next_siblings[0].text
+                            # Define the regular expression pattern
+                            pattern = r'في (\d+ [^\s]+ \d+)'
+                            # Use re.search to find the match
+                            match = re.search(pattern, var1)
+                            # Check if there is a match and extract the result
+                            if match:
+                                full_date_str = match.group(1)
+                                object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split()
+                                object['singatureMonth'] = arabic_months[singatureMonth]
+                            date = next_siblings[1].text
+                            # Define the regular expression pattern
+                            pattern = r'في (.*?)،'
+                            # Use re.search to find the match
+                            match = re.search(pattern, date)
+                            # Check if there is a match and extract the result
+                            if match:
+                                jornal_date_str = match.group(1)
+                                object['journalDay'], journalMonth, _ = jornal_date_str.split()
+                                object['journalMonth'] = arabic_months[journalMonth]
 
-                        object['content'] = next_siblings[2].text
-                        lawTexts.append(object.copy())
-                    else:
-                        print("ERROR")
-    #            print(lawTexts)
-    #           print(len(lawTexts))
+                            object['content'] = next_siblings[2].text
+                            lawTexts.append(object.copy())
+                        else:
+                            print("ERROR")
+        #            print(lawTexts)
+        #           print(len(lawTexts))
                 next_page_button = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable(
                         (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
