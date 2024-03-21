@@ -411,12 +411,15 @@ def scrape_law_data(law_type):
                     print(log_line)
                     file.write(log_line)
 
-                next_page_button = WebDriverWait(driver, 10).until(
-                    EC.element_to_be_clickable(
-                        (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
-                )
+                try:
+                    next_page_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable(
+                            (By.XPATH, '//a[@href="javascript:Sauter(\'a\',3);"]'))
+                    )
+                    next_page_button.click()
+                except TimeoutException:
+                    pass
 
-                next_page_button.click()
                 time.sleep(10)
                 i = i + 1
                 print(i)
@@ -475,6 +478,7 @@ if __name__ == '__main__':
     law_types = law_types[1:]
     print(law_types)
     driver.quit()
+    
 
     law_types_iterator = iter(law_types)
 
