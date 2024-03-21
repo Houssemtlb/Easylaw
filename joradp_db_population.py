@@ -403,13 +403,13 @@ def scrape_law_data(law_type):
                         else:
                             print("ERROR")
 
-                log_line = f"~~~~~~~~~~~~~~~~ \n Following sibling number: {lawTexts}\n"
-                print(log_line)
-                file.write(log_line)
+                    log_line = f"~~~~~~~~~~~~~~~~ \n Following sibling number: {lawTexts}\n"
+                    print(log_line)
+                    file.write(log_line)
 
-                log_line = f"~~~~~~~~~~~~~~~~ \n Lenght: {len(lawTexts)}\n"
-                print(log_line)
-                file.write(log_line)
+                    log_line = f"~~~~~~~~~~~~~~~~ \n Lenght: {len(lawTexts)}\n"
+                    print(log_line)
+                    file.write(log_line)
 
                 next_page_button = WebDriverWait(driver, 10).until(
                     EC.element_to_be_clickable(
@@ -418,7 +418,7 @@ def scrape_law_data(law_type):
 
                 next_page_button.click()
                 time.sleep(10)
-                i += 1
+                i = i + 1
                 print(i)
         except TimeoutException as e:
             print(f"TimeoutException: {e} RETRYING...")
@@ -478,6 +478,7 @@ if __name__ == '__main__':
 
     law_types_iterator = iter(law_types)
 
-    with multiprocessing.Pool(processes=3) as pool:
-        for result in pool.imap(scrape_law_data, law_types_iterator):
-            pass
+    # with multiprocessing.Pool(processes=3) as pool:
+    #    for result in pool.imap(scrape_law_data, law_types_iterator):
+    #        pass
+    scrape_law_data(law_type=law_types[10])
