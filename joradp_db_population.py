@@ -478,7 +478,6 @@ if __name__ == '__main__':
 
     law_types_iterator = iter(law_types)
 
-    # with multiprocessing.Pool(processes=3) as pool:
-    #    for result in pool.imap(scrape_law_data, law_types_iterator):
-    #        pass
-    scrape_law_data(law_type=law_types[10])
+    with multiprocessing.Pool(processes=3) as pool:
+        for result in pool.imap(scrape_law_data, law_types_iterator):
+            pass
