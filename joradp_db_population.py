@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import time
 import re
+import psycopg2
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
+
 
 arabic_months = {
     'يناير': 1,
@@ -27,6 +29,15 @@ arabic_months = {
 
 
 def scrape_law_data(law_type):
+    # Connect to the PostgreSQL database
+    conn = psycopg2.connect(
+        dbname="easylaw",
+        user="postgres",
+        password="postgres",
+        host="localhost",
+        port="5432"
+    )
+
     number_of_pages = 0
     i = 0
     j = 0
@@ -34,9 +45,10 @@ def scrape_law_data(law_type):
         i = 0
         lawTexts = []
         print(f"TRY NUMBER {j + 1} FOR {law_type}!!!")
+
         try:
             options = Options()
-            # options.add_argument("--headless=new")
+            options.add_argument("--headless=new")
             driver = webdriver.Chrome(options=options)
 
             # Open the website
@@ -129,9 +141,9 @@ def scrape_law_data(law_type):
                     for row in matching_rows:
                         allAssoc = []
                         row_number += 1
-                        print("row: ", row_number)
-                        object = {'id': -1, 'textType': '', 'textNumber': '', 'journalYear': '', 'journalDay': '', 'journalMonth': '', 'journalNum': '',
-                                  'journalPage': '', 'singatureDay': '', 'singatureMonth': '', 'singatureYear': '', 'ministry': '', 'content': ''}
+                        # print("row: ", row_number)
+                        object = {'id': -1, 'textType': '', 'textNumber': '', 'journalDate': '', 'journalNum': '',
+                                  'journalPage': '', 'singatureDate': '', 'ministry': '', 'content': ''}
                         # Find the a element within the current row
                         link_element = row.find_element(By.XPATH, './/td[2]/a')
                         # Get the href attribute value and append it to the array
@@ -139,7 +151,7 @@ def scrape_law_data(law_type):
                         page = re.search(
                             r'JoOpen\("(\d+)", *"(\d+)", *"(\d+)", *"([A-Za-z]+)"\)', href_value)
                         if page:
-                            object['journalYear'], object['journalNum'], object['journalPage'], letter = page.groups(
+                            journalYear, object['journalNum'], object['journalPage'], letter = page.groups(
                             )
 
                         id_element = row.find_element(By.XPATH, './/td[1]/a')
@@ -155,47 +167,47 @@ def scrape_law_data(law_type):
                         sibling_number = 0
                         while True:
                             sibling_number += 1
-                            print(
-                                "----------------- \n Following sibling number:", sibling_number)
-                            log_line = f"----------------- \n Following sibling number: {sibling_number}\n"
-                            file.write(log_line)
+                            # print(
+                            #    "----------------- \n Following sibling number:", sibling_number)
+                            # log_line = f"----------------- \n Following sibling number: {sibling_number}\n"
+                            # file.write(log_line)
                             following_sibling_found = current_element.find_elements(
                                 By.XPATH, 'following-sibling::tr[1]')
                             try:
                                 if (following_sibling_found):
                                     following_sibling = following_sibling_found[0]
-                                    print(
-                                        " ----------------- \n Following sibling found")
-                                    log_line = f" ----------------- \n Following sibling found\n"
-                                    file.write(log_line)
+                                    # print(
+                                    #    " ----------------- \n Following sibling found")
+                                    # log_line = f" ----------------- \n Following sibling found\n"
+                                    # file.write(log_line)
 
-                                    print(
-                                        f"Following sibling Text: \n {following_sibling.text}\n")
-                                    log_line = f"Following sibling Text: \n {following_sibling.text}\n"
-                                    file.write(log_line)
+                                    # print(
+                                    #    f"Following sibling Text: \n {following_sibling.text}\n")
+                                    # log_line = f"Following sibling Text: \n {following_sibling.text}\n"
+                                    # file.write(log_line)
 
                                     sibling_bgcolor = following_sibling.get_attribute(
                                         'bgcolor')
-                                    print(
-                                        f"Sibling bgcolor: {sibling_bgcolor}")
-                                    log_line = f"Sibling bgcolor: {sibling_bgcolor}\n"
-                                    file.write(log_line)
+                                    # print(
+                                    #    f"Sibling bgcolor: {sibling_bgcolor}")
+                                    # log_line = f"Sibling bgcolor: {sibling_bgcolor}\n"
+                                    # file.write(log_line)
 
                                     if (sibling_bgcolor == "#78a7b9"):
-                                        print(
-                                            "***********\n Next law found \n ***********\n**************\n")
-                                        log_line = f"***********\n Next law found\n ***********\n**************\n"
-                                        file.write(log_line)
+                                        # print(
+                                        #    "***********\n Next law found \n ***********\n**************\n")
+                                        # log_line = f"***********\n Next law found\n ***********\n**************\n"
+                                        # file.write(log_line)
 
                                         if (assocObject['assoc'] != ''):
-                                            log_line = f"assocObject: {assocObject}\n"
-                                            file.write(log_line)
-                                            print("assocObject:", assocObject)
+                                            # log_line = f"assocObject: {assocObject}\n"
+                                            # file.write(log_line)
+                                            # print("assocObject:", assocObject)
 
                                             allAssoc.append(assocObject)
-                                            log_line = f"All law Assoc: {allAssoc}\n"
-                                            file.write(log_line)
-                                            print("All law Assoc:", allAssoc)
+                                            # log_line = f"All law Assoc: {allAssoc}\n"
+                                            # file.write(log_line)
+                                            # print("All law Assoc:", allAssoc)
 
                                         break
                                     else:
@@ -203,66 +215,66 @@ def scrape_law_data(law_type):
                                             By.XPATH, './/td')
                                         law_td = td_elements[0]
                                         marg = law_td.get_attribute("colspan")
-                                        print(f"Colspan for law_td: {marg}")
-                                        log_line = f"Colspan for law_td: {marg}\n"
-                                        file.write(log_line)
+                                        # print(f"Colspan for law_td: {marg}")
+                                        # log_line = f"Colspan for law_td: {marg}\n"
+                                        # file.write(log_line)
 
                                         if (marg == "6"):
                                             next_siblings.append(
                                                 following_sibling)
-                                            print("Added to next_siblings")
-                                            log_line = f"Added to next_siblings\n"
-                                            file.write(log_line)
+                                            # print("Added to next_siblings")
+                                            # log_line = f"Added to next_siblings\n"
+                                            # file.write(log_line)
                                         else:
                                             assoc_td = td_elements[1]
                                             marg = assoc_td.get_attribute(
                                                 "colspan")
-                                            log_line = f"Colspan for assoc_td: {marg}\n"
-                                            file.write(log_line)
-                                            print(
-                                                f"Colspan for assoc_td: {marg}")
+                                            # log_line = f"Colspan for assoc_td: {marg}\n"
+                                            # file.write(log_line)
+                                            # print(
+                                            #    f"Colspan for assoc_td: {marg}")
 
                                             if (marg == "5"):
                                                 if (assocObject['assoc'] != ''):
                                                     log_line = f"assocObject: {assocObject}\n"
-                                                    file.write(log_line)
-                                                    print("assocObject:",
-                                                          assocObject)
+                                                    # file.write(log_line)
+                                                    # print("assocObject:",
+                                                    #      assocObject)
                                                     allAssoc.append(
                                                         assocObject)
-                                                    log_line = f"All law Assoc until now: {allAssoc}\n"
-                                                    file.write(log_line)
-                                                    print(
-                                                        "All law Assoc until now:", allAssoc)
+                                                    # log_line = f"All law Assoc until now: {allAssoc}\n"
+                                                    # file.write(log_line)
+                                                    # print(
+                                                    #    "All law Assoc until now:", allAssoc)
 
                                                 assoc = assoc_td.find_element(
                                                     By.TAG_NAME, 'font')
                                                 assocObject = {
                                                     "assoc": "", "idOut": object['id'], "idsIn": []}
                                                 assocObject["assoc"] = assoc.text
-                                                print(
-                                                    f"Association text: {assoc.text}")
-                                                log_line = f"Association text: {assoc.text}\n"
-                                                file.write(log_line)
+                                                # print(
+                                                #    f"Association text: {assoc.text}")
+                                                # log_line = f"Association text: {assoc.text}\n"
+                                                # file.write(log_line)
 
                                             else:
                                                 law_td = td_elements[0]
                                                 marg = law_td.get_attribute(
                                                     "colspan")
-                                                print(
-                                                    f"Colspan for law_td (2nd check): {marg}")
-                                                log_line = f"Colspan for law_td (2nd check): {marg}\n"
-                                                file.write(log_line)
+                                                # print(
+                                                #    f"Colspan for law_td (2nd check): {marg}")
+                                                # log_line = f"Colspan for law_td (2nd check): {marg}\n"
+                                                # file.write(log_line)
 
                                                 if (marg == "2"):
                                                     if (len(td_elements) == 3):
                                                         law_td = td_elements[2]
                                                         color = law_td.get_attribute(
                                                             "bgcolor")
-                                                        print(
-                                                            f"Law_td bgcolor: {color}")
-                                                        log_line = f"Law_td bgcolor: {color}\n"
-                                                        file.write(log_line)
+                                                        # print(
+                                                        #    f"Law_td bgcolor: {color}")
+                                                        # log_line = f"Law_td bgcolor: {color}\n"
+                                                        # file.write(log_line)
 
                                                         if (color == "#9ec7d7"):
                                                             law_td = td_elements[1]
@@ -270,11 +282,11 @@ def scrape_law_data(law_type):
                                                                 By.TAG_NAME, 'a')
                                                             id_element_href = id_element.get_attribute(
                                                                 "href")
-                                                            print(
-                                                                f"Law ID href: {id_element_href}")
-                                                            log_line = f"Law ID href: {id_element_href}\n"
-                                                            file.write(
-                                                                log_line)
+                                                            # print(
+                                                            #    f"Law ID href: {id_element_href}")
+                                                            # log_line = f"Law ID href: {id_element_href}\n"
+                                                            # file.write(
+                                                            #    log_line)
 
                                                             match = re.search(
                                                                 r'#(\d+)', id_element_href)
@@ -284,47 +296,52 @@ def scrape_law_data(law_type):
                                                                     1)
                                                                 assocObject["idsIn"].append(
                                                                     id_number)
-                                                                print(
-                                                                    f"Law ID: {id_number}")
-                                                                log_line = f"Law ID: {id_number}\n"
-                                                                file.write(
-                                                                    log_line)
+                                                                # print(
+                                                                #    f"Law ID: {id_number}")
+                                                                # log_line = f"Law ID: {id_number}\n"
+                                                                # file.write(
+                                                                #   log_line)
                                                             else:
-                                                                print(
-                                                                    "Error finding law id!")
-                                                                log_line = f"Error finding law id!\n"
-                                                                file.write(
-                                                                    log_line)
+                                                                pass
+                                                                # print(
+                                                                #    "Error finding law id!")
+                                                                # log_line = f"Error finding law id!\n"
+                                                                # file.write(
+                                                                #    log_line)
 
                                                         else:
-                                                            print(
-                                                                "Processing another law for the association")
-                                                            log_line = f"Processing another law for the association\n"
-                                                            file.write(
-                                                                log_line)
+                                                            pass
+                                                            # print(
+                                                            #    "Processing another law for the association")
+                                                            # log_line = f"Processing another law for the association\n"
+                                                            # file.write(
+                                                            #    log_line)
                                                     else:
+                                                        pass
                                                         # association law data
-                                                        print(
-                                                            "association law data")
-                                                        log_line = f"association law data\n"
-                                                        file.write(log_line)
+                                                        # print(
+                                                        #    "association law data")
+                                                        # log_line = f"association law data\n"
+                                                        # file.write(log_line)
                                                 else:
-                                                    print(
-                                                        "No matching conditions for association law")
-                                                    log_line = f"No matching conditions for association law\n"
-                                                    file.write(log_line)
+                                                    pass
+                                                    # print(
+                                                    #    "No matching conditions for association law")
+                                                    # log_line = f"No matching conditions for association law\n"
+                                                    # file.write(log_line)
                                 else:
+                                    pass
                                     # the last element in the page
                                     break
                             except Exception as e:
                                 log_line = f"Error in processing: {e}\n"
                                 file.write(log_line)
-                                print(f"Error in processing: {e}")
+                                # print(f"Error in processing: {e}")
 
                             current_element = following_sibling
 
-                        print("len(next_siblings): ", len(next_siblings))
-                        print("row", row_number)
+                        # print("len(next_siblings): ", len(next_siblings))
+                        # print("row", row_number)
 
                         if (len(next_siblings) == 4):
                             var1 = next_siblings[0].text
@@ -344,9 +361,13 @@ def scrape_law_data(law_type):
                             # Check if there is a match and extract the result
                             if match:
                                 full_date_str = match.group(1)
-                                object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split(
+                                singatureDay, singatureMonth, singatureYear = full_date_str.split(
                                 )
-                                object['singatureMonth'] = arabic_months[singatureMonth]
+                                singatureMonth = arabic_months[singatureMonth]
+
+                                object['singatureDate'] = singatureYear + \
+                                    "-" + str(singatureMonth) + \
+                                    "-" + singatureDay
 
                             object['ministry'] = next_siblings[1].text
 
@@ -358,9 +379,11 @@ def scrape_law_data(law_type):
                             # Check if there is a match and extract the result
                             if match:
                                 jornal_date_str = match.group(1)
-                                object['journalDay'], journalMonth, _ = jornal_date_str.split(
+                                journalDay, journalMonth, _ = jornal_date_str.split(
                                 )
-                                object['journalMonth'] = arabic_months[journalMonth]
+                                journalMonth = arabic_months[journalMonth]
+                                object['journalDate'] = journalYear + \
+                                    "-" + str(journalMonth) + "-" + journalDay
 
                             object['content'] = next_siblings[3].text
                             lawTexts.append(object.copy())
@@ -383,9 +406,14 @@ def scrape_law_data(law_type):
                             # Check if there is a match and extract the result
                             if match:
                                 full_date_str = match.group(1)
-                                object['singatureDay'], singatureMonth, object['singatureYear'] = full_date_str.split(
+                                singatureDay, singatureMonth, singatureYear = full_date_str.split(
                                 )
-                                object['singatureMonth'] = arabic_months[singatureMonth]
+                                singatureMonth = arabic_months[singatureMonth]
+
+                                object['singatureDate'] = singatureYear + \
+                                    "-" + str(singatureMonth) + \
+                                    "-" + singatureDay
+
                             date = next_siblings[1].text
                             # Define the regular expression pattern
                             pattern = r'في (.*?)،'
@@ -394,22 +422,24 @@ def scrape_law_data(law_type):
                             # Check if there is a match and extract the result
                             if match:
                                 jornal_date_str = match.group(1)
-                                object['journalDay'], journalMonth, _ = jornal_date_str.split(
+                                journalDay, journalMonth, _ = jornal_date_str.split(
                                 )
-                                object['journalMonth'] = arabic_months[journalMonth]
+                                journalMonth = arabic_months[journalMonth]
+                                object['journalDate'] = journalYear + \
+                                    "-" + str(journalMonth) + "-" + journalDay
 
                             object['content'] = next_siblings[2].text
                             lawTexts.append(object.copy())
                         else:
                             print("ERROR")
 
-                    log_line = f"~~~~~~~~~~~~~~~~ \n Following sibling number: {lawTexts}\n"
-                    print(log_line)
-                    file.write(log_line)
+                    # log_line = f"~~~~~~~~~~~~~~~~ \n Following sibling number: {lawTexts}\n"
+                    # print(log_line)
+                    # file.write(log_line)
 
-                    log_line = f"~~~~~~~~~~~~~~~~ \n Lenght: {len(lawTexts)}\n"
-                    print(log_line)
-                    file.write(log_line)
+                    # log_line = f"~~~~~~~~~~~~~~~~ \n Lenght: {len(lawTexts)}\n"
+                    # print(log_line)
+                    # file.write(log_line)
 
                 try:
                     next_page_button = WebDriverWait(driver, 10).until(
@@ -422,7 +452,22 @@ def scrape_law_data(law_type):
 
                 time.sleep(10)
                 i = i + 1
-                print(i)
+                # print(i)
+
+            # HERE WE INSERT LAWTEXTS INTO THE DB
+            # log_line = f"~~~~~~~~~~~~~~~~ \n all text laws of page {i}\n"
+            # file.write(log_line)
+            cursor = conn.cursor()
+
+            print("entering the loop")
+            for law_text in lawTexts:
+                storeLawText(law_text=law_text, cursor=cursor)
+
+            print("commiting")
+            conn.commit()
+            print("finished commititng")
+            cursor.close()
+
         except TimeoutException as e:
             print(f"TimeoutException: {e} RETRYING...")
         finally:
@@ -432,11 +477,38 @@ def scrape_law_data(law_type):
     print(f"PROGRAM ENDED AFTER {j + 1} TRIES FOR {law_type}!!!")
 
 
+def storeLawText(law_text, cursor):
+    print(f"inserting : {law_text}")
+    cursor.execute("""
+        INSERT INTO text (id_text, text_type, text_number, journal_date, journal_num, journal_page, signature_date, ministry, content)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (id_text) DO UPDATE
+        SET textType = EXCLUDED.textType,
+            textNumber = EXCLUDED.textNumber,
+            journalDate = EXCLUDED.journalDate,
+            journalNum = EXCLUDED.journalNum,
+            journalPage = EXCLUDED.journalPage,
+            signatureDate = EXCLUDED.signatureDate,
+            ministry = EXCLUDED.ministry,
+            content = EXCLUDED.content
+    """, (
+        law_text['id'],
+        law_text['textType'],
+        law_text['textNumber'],
+        law_text['journalDate'],
+        law_text['journalNum'],
+        law_text['journalPage'],
+        law_text['singatureDate'],
+        law_text['ministry'],
+        law_text['content']
+    ))
+
+
 if __name__ == '__main__':
 
     # Initialize ChromeOptions
     options = Options()
-    # options.add_argument("--headless=new")
+    options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
     # Open the website
@@ -478,10 +550,11 @@ if __name__ == '__main__':
     law_types = law_types[1:]
     print(law_types)
     driver.quit()
-    
 
     law_types_iterator = iter(law_types)
 
-    with multiprocessing.Pool(processes=3) as pool:
-        for result in pool.imap(scrape_law_data, law_types_iterator):
-            pass
+    # with multiprocessing.Pool(processes=5) as pool:
+    #    for result in pool.imap(scrape_law_data, law_types_iterator):
+    #        pass
+
+    scrape_law_data(law_type=law_types[2])
