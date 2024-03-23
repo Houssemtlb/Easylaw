@@ -13,6 +13,7 @@ from datetime import date as dt
 from sqlalchemy import create_engine, Column, Integer, String, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import ARRAY
 
 Base = declarative_base()
 
@@ -28,6 +29,13 @@ class LawText(Base):
     signature_date = Column(Date)
     ministry = Column(String)
     content = Column(String)
+
+class Association(Base):
+    __tablename__ = 'associations'
+    id = Column(Integer, primary_key=True)
+    assoc_nom = Column(String)
+    id_out = Column(Integer)
+    ids_in = Column(ARRAY(Integer))
 
 
 engine = create_engine('postgresql://postgres:postgres@localhost:5432/easylaw')
@@ -147,11 +155,11 @@ def scrape_law_data(law_type):
             while (i <= number_of_pages):
                 matching_rows = driver.find_elements(
                     By.XPATH, '//tr[@bgcolor="#78a7b9"]')
+                allAssoc = []
                 # Iterate through the matching rows
                 with open(f'.\\pages_scraping_logs\\{law_type}\\page_{i}.txt', 'w', encoding='utf-8') as file:
                     row_number = 0
                     for row in matching_rows:
-                        allAssoc = []
                         row_number += 1
                         # print("row: ", row_number)
                         object = {'id': -1, 'textType': '', 'textNumber': '', 'journalDate': '', 'journalNum': '',
@@ -477,6 +485,7 @@ def scrape_law_data(law_type):
                 time.sleep(10)
                 i = i + 1
                 storeLawText(lawTexts)
+                storeLawAssociations(allAssoc)
                 # print(i)
 
             # HERE WE INSERT LAWTEXTS INTO THE DB
@@ -527,6 +536,26 @@ def storeLawText(lawTexts):
     except Exception as e:
         session.rollback()
         print(f"Error inserting/updating law text: {e}")
+    finally:
+        session.close()
+
+def storeLawAssociations(associations):
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        for assoc_data in associations:
+            # Create a new Association object
+            assoc_object = Association(
+                id_out=assoc_data['idOut'],
+                assoc_nom=assoc_data['assoc'],
+                ids_in=assoc_data['idsIn']
+            )
+            session.add(assoc_object)
+        session.commit()
+        print("Associations stored successfully.")
+    except Exception as e:
+        session.rollback()
+        print(f"Error storing associations: {e}")
     finally:
         session.close()
 
