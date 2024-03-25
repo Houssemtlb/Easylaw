@@ -611,7 +611,7 @@ if __name__ == '__main__':
     driver.quit()
 
     law_types_iterator = iter(law_types)
-    with multiprocessing.Pool(processes=26) as pool:
+    with multiprocessing.Pool(processes=3) as pool:
         for result in pool.imap(scrape_law_data, law_types_iterator):
             pass
         
