@@ -432,23 +432,23 @@ def scrape_law_data(law_type):
                             log_line = f" \n \n \n ERROR\n"
                             file.write(log_line)
                 
-                total_number_of_laws += len(lawTexts)
-                storeLawText(lawTexts)
-                
-                log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n lawTexts {lawTexts}\n"
-                file.write(log_line)
-                log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of lawTexts {len(lawTexts)}\n"
-                file.write(log_line)
-                
-                print("total_number_of_laws until now: ", total_number_of_laws)
+                    total_number_of_laws += len(lawTexts)
+                    storeLawText(lawTexts)
+                    
+                    log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n lawTexts {lawTexts}\n"
+                    file.write(log_line)
+                    log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of lawTexts {len(lawTexts)}\n"
+                    file.write(log_line)
+                    
+                    print("total_number_of_laws until now: ", total_number_of_laws)
 
-                total_number_of_associations += len(allAssoc)
-                storeLawAssociations(allAssoc)
-                
-                log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n allAssoc {allAssoc}\n"
-                file.write(log_line)
-                log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of allAssoc {len(allAssoc)}\n"
-                file.write(log_line)
+                    total_number_of_associations += len(allAssoc)
+                    storeLawAssociations(allAssoc)
+                    
+                    log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n allAssoc {allAssoc}\n"
+                    file.write(log_line)
+                    log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of allAssoc {len(allAssoc)}\n"
+                    file.write(log_line)
 
                 try:
                     next_page_button = WebDriverWait(driver, 10).until(
@@ -463,20 +463,17 @@ def scrape_law_data(law_type):
                 
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n page {i}\n"
                 print(log_line)
-                file.write(log_line)
                 
                 i = i + 1
 
         except TimeoutException as e:
             log_line = f"TimeoutException: {e} RETRYING..."
-            file.write(log_line)
             print(log_line)
         finally:
             driver.quit()
             j += 1
 
     log_line = f"PROGRAM ENDED AFTER {j + 1} TRIES FOR {law_type}!!!"
-    file.write(log_line)
     print(log_line)
 
 
