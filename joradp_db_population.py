@@ -68,6 +68,7 @@ def scrape_law_data(law_type):
     j = 0
     lawTexts = []
     allAssoc = []
+    number_of_laws_in_this_type = 0
     while (i <= number_of_pages):
         i = 0
         print(f"TRY NUMBER {j + 1} FOR {law_type}!!!")
@@ -433,6 +434,7 @@ def scrape_law_data(law_type):
                             file.write(log_line)
                 
                     total_number_of_laws += len(lawTexts)
+                    number_of_laws_in_this_type += len(lawTexts)
                     storeLawText(lawTexts)
                     
                     log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n lawTexts {lawTexts}\n"
@@ -467,6 +469,7 @@ def scrape_law_data(law_type):
                 i = i + 1
 
         except TimeoutException as e:
+            total_number_of_laws -= number_of_laws_in_this_type
             log_line = f"TimeoutException: {e} RETRYING..."
             print(log_line)
         finally:
