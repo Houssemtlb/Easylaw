@@ -8,7 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
 from datetime import date as dt
 from sqlalchemy import create_engine, Column, Integer, String, Date
 from sqlalchemy.orm import declarative_base
@@ -100,8 +100,8 @@ def scrape_law_data(law_type):
 
         try:
             options = Options()
-            options.add_argument("--headless=new")
-            driver = webdriver.Chrome(options=options)
+            #options.add_argument("--headless=new")
+            driver = webdriver.Firefox(options=options)
 
             # Open the website
             driver.get("https://www.joradp.dz/HAR/Index.htm")
@@ -547,7 +547,7 @@ def scrape_law_data(law_type):
                     )
                     next_page_button.click()
                     
-                    expected_number = (i+1 * 200) + 1
+                    expected_number = ((i+1) * 200) + 1
 
                     def check_page(driver):
                         element_text = driver.find_element(By.XPATH,'//*[@id="tex"]').text
@@ -645,8 +645,8 @@ if __name__ == "__main__":
 
     # Initialize ChromeOptions
     options = Options()
-    options.add_argument("--headless=new")
-    driver = webdriver.Chrome(options=options)
+    #options.add_argument("--headless=new")
+    driver = webdriver.Firefox(options=options)
 
     # Open the website
     driver.get("https://www.joradp.dz/HAR/Index.htm")
