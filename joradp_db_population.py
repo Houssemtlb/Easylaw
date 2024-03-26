@@ -562,7 +562,7 @@ def scrape_law_data(law_type):
                             return False
 
                     print("expected_number", expected_number)
-                    WebDriverWait(driver, 20, 2).until(check_page)
+                    WebDriverWait(driver, 120, 2).until(check_page)
                     print(f"Successfully navigated to page {i + 1}")
 
                 i = i + 1
