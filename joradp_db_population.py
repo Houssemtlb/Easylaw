@@ -22,7 +22,7 @@ def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s : \n %(message)s \n\n"
+        "%(asctime)s - %(name)s - %(levelname)s : \n %(message)s \n"
     )
     handler = logging.FileHandler(
         log_file, encoding="utf-8", mode="w"
@@ -535,22 +535,35 @@ def scrape_law_data(law_type):
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of allAssoc {len(allAssoc)}\n"
                 page_logger.info(log_line)
 
-                page_logger.info("Finished scraping page")
+                log_line = f" \n Finished scraping page {i} of {law_type} with {len(lawTexts)} law and {len(allAssoc)} assoc \n"
+                page_logger.info(log_line)
+                print(log_line)
 
-                try:
+                if (i != number_of_pages):
                     next_page_button = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable(
                             (By.XPATH, "//a[@href=\"javascript:Sauter('a',3);\"]")
                         )
                     )
                     next_page_button.click()
-                except TimeoutException:
-                    pass
+                    
+                    expected_number = (i+1 * 200) + 1
 
-                time.sleep(10)
+                    def check_page(driver):
+                        element_text = driver.find_element(By.XPATH,'//*[@id="tex"]').text
+                        pattern = r"من (\d+) إلى"
+                        match = re.search(pattern, element_text)
+                        if match:
+                            found_number = int(match.group(1))
+                            print(f"Found text: '{element_text}'. Extracted number: {found_number}. Expected number: {expected_number}.")
+                            return found_number == expected_number
+                        else:
+                            print(f"No match found in text: '{element_text}'")
+                            return False
 
-                log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n page {i}\n"
-                print(log_line)
+                    print("expected_number", expected_number)
+                    WebDriverWait(driver, 20, 2).until(check_page)
+                    print(f"Successfully navigated to page {i + 1}")
 
                 i = i + 1
 
