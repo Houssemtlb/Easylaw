@@ -55,14 +55,11 @@ class LawText(Base):
     ministry = Column(String)
     content = Column(String)
 
-
 class Association(Base):
-    __tablename__ = "associations"
-    id = Column(Integer, primary_key=True)
-    assoc_nom = Column(String)
-    id_out = Column(Integer)
+    __tablename__ = 'law_associations'
+    id_out = Column(Integer, primary_key=True)
+    assoc_nom = Column(String, primary_key=True)
     ids_in = Column(ARRAY(Integer))
-
 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
 
@@ -630,26 +627,37 @@ def storeLawText(lawTexts):
     finally:
         session.close()
 
-
 def storeLawAssociations(associations):
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
         for assoc_data in associations:
-            # Create a new Association object
-            assoc_object = Association(
-                id_out=assoc_data["idOut"],
-                assoc_nom=assoc_data["assoc"],
-                ids_in=assoc_data["idsIn"],
+            # Directly attempt to retrieve the specific association using both parts of the composite key
+            existing_assoc = session.query(Association).get(
+                {"id_out": assoc_data["idOut"], "assoc_nom": assoc_data["assoc"]}
             )
-            session.add(assoc_object)
+
+            if existing_assoc:
+                # If the association exists, update the ids_in
+                existing_assoc.ids_in = assoc_data["idsIn"]
+            else:
+                # If no such association exists, create a new one
+                new_assoc = Association(
+                    id_out=assoc_data["idOut"],
+                    assoc_nom=assoc_data["assoc"],
+                    ids_in=assoc_data["idsIn"],
+                )
+                session.add(new_assoc)
+
+        # Commit the session once all associations have been processed
         session.commit()
     except Exception as e:
+        # If any exception occurs, rollback the session to avoid partial commits
         session.rollback()
-        print(f"Error storing associations: {e}")
+        print(f"Error in storing/updating associations: {e}")
     finally:
+        # Ensure the session is closed properly in a finally block
         session.close()
-
 
 if __name__ == "__main__":
 
