@@ -16,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import ARRAY
 
 import logging
+import random
 
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -99,12 +100,20 @@ def scrape_law_data(law_type):
         print(f"TRY NUMBER {j + 1} FOR {law_type}!!!")
 
         try:
+            random_duration = random.randint(3, 10)		
+            # Wait for the random duration
+            time.sleep(random_duration)
+
             options = Options()
             #options.add_argument("--headless=new")
             driver = webdriver.Firefox(options=options)
 
             # Open the website
             driver.get("https://www.joradp.dz/HAR/Index.htm")
+            
+            random_duration = random.randint(3, 10)
+            # Wait for the random duration
+            time.sleep(random_duration)
 
             # Switch to the frame with src="ATitre.htm"
             driver.switch_to.frame(
@@ -112,14 +121,14 @@ def scrape_law_data(law_type):
             )
 
             # Wait for an element on the page to indicate that it's fully loaded
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located(
                     (By.XPATH, "/html/body/div/table[2]/tbody/tr/td[3]/a")
                 )
             )
 
             # Now you can interact with elements inside this frame
-            search_link = WebDriverWait(driver, 10).until(
+            search_link = WebDriverWait(driver, 60).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, "/html/body/div/table[2]/tbody/tr/td[3]/a")
                 )
@@ -134,7 +143,7 @@ def scrape_law_data(law_type):
             )
 
             # select category
-            select_input = WebDriverWait(driver, 10).until(
+            select_input = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.NAME, "znat"))
             )
 
@@ -142,41 +151,41 @@ def scrape_law_data(law_type):
             select_object.select_by_visible_text(law_type)
 
             # Find the input field and enter '01/01/1964'
-            date_input = WebDriverWait(driver, 10).until(
+            date_input = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.NAME, "znjd"))
             )
             date_input.clear()
             date_input.send_keys("01/01/1964")
 
             # Click on the "بــحـــث" button
-            search_button = WebDriverWait(driver, 10).until(
+            search_button = WebDriverWait(driver, 60).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, '//a[contains(@title, "تشغيل البحث")]')
                 )
             )
             search_button.click()
 
-            display_settings_link = WebDriverWait(driver, 10).until(
+            display_settings_link = WebDriverWait(driver, 60).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, "/html/body/div/table[1]/tbody/tr/td[1]/a")
                 )
             )
             display_settings_link.click()
 
-            pages_input = WebDriverWait(driver, 10).until(
+            pages_input = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.NAME, "daff"))
             )
             pages_input.clear()
             pages_input.send_keys("200")
 
-            irsal_link = WebDriverWait(driver, 30).until(
+            irsal_link = WebDriverWait(driver, 60).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, "/html/body/div/form/table[2]/tbody/tr[1]/td/a")
                 )
             )
             irsal_link.click()
 
-            numberOfPages = WebDriverWait(driver, 10).until(
+            numberOfPages = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.XPATH, '//*[@id="tex"]'))
             )
             number_of_pages_text = numberOfPages.text
@@ -540,7 +549,7 @@ def scrape_law_data(law_type):
                 print(log_line)
 
                 if (i != number_of_pages):
-                    next_page_button = WebDriverWait(driver, 10).until(
+                    next_page_button = WebDriverWait(driver, 60).until(
                         EC.element_to_be_clickable(
                             (By.XPATH, "//a[@href=\"javascript:Sauter('a',3);\"]")
                         )
@@ -655,14 +664,14 @@ if __name__ == "__main__":
     driver.switch_to.frame(driver.find_element(By.XPATH, '//frame[@src="ATitre.htm"]'))
 
     # Wait for an element on the page to indicate that it's fully loaded
-    WebDriverWait(driver, 10).until(
+    WebDriverWait(driver, 60).until(
         EC.presence_of_element_located(
             (By.XPATH, "/html/body/div/table[2]/tbody/tr/td[3]/a")
         )
     )
 
     # Now you can interact with elements inside this frame
-    search_link = WebDriverWait(driver, 10).until(
+    search_link = WebDriverWait(driver, 60).until(
         EC.element_to_be_clickable(
             (By.XPATH, "/html/body/div/table[2]/tbody/tr/td[3]/a")
         )
@@ -675,7 +684,7 @@ if __name__ == "__main__":
     driver.switch_to.frame(driver.find_element(By.XPATH, '//frame[@name="FnCli"]'))
 
     # Find the input field and enter '01/01/1964'
-    select_input = WebDriverWait(driver, 10).until(
+    select_input = WebDriverWait(driver, 60).until(
         EC.presence_of_element_located((By.NAME, "znat"))
     )
     select_object = Select(select_input)
