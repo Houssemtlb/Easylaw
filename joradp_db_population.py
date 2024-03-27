@@ -580,6 +580,10 @@ def scrape_law_data(law_type):
             total_number_of_laws -= number_of_laws_in_this_type
             log_line = f"TimeoutException: {e} RETRYING..."
             print(log_line)
+        except Exception as e:
+            total_number_of_laws -= number_of_laws_in_this_type
+            log_line = f"ERROR !!!!: {e} RETRYING..."
+            print(log_line)
         finally:
             driver.quit()
             j += 1
@@ -696,6 +700,8 @@ if __name__ == "__main__":
     law_types = law_types[1:]
     print(law_types)
     driver.quit()
+        
+    #law_types = ['أمر', 'منشور', 'منشور وزاري مشترك', 'لائحة', 'مداولة', 'مداولة م-أ-للدولة', 'مرسوم', 'مرسوم تنفيذي', 'مرسوم تشريعي', 'مرسوم رئاسي', 'مقرر', 'مقرر وزاري مشترك', 'إعلان', 'نظام', 'اتفاقية', 'تصريح', 'تقرير', 'تعليمة', 'تعليمة وزارية مشتركة', 'جدول', 'رأي', 'قانون', 'قانون عضوي', 'قرار', 'قرار ولائي', 'قرار وزاري مشترك']
 
     law_types_iterator = iter(law_types)
     with multiprocessing.Pool(processes=3) as pool:
