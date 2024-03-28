@@ -4,3 +4,4 @@ joradp_pdfs
 .ipynb_checkpoints
 *.ipynb
 pages_scraping_logs
+scraping_logs
