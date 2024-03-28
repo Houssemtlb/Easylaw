@@ -500,7 +500,7 @@ def scrape_law_data(law_type):
 
                         date = next_siblings[1].text
                         # Define the regular expression pattern
-                        pattern = r"في (.*?)،"
+                        pattern = r"في (\d+ [^\s]+ \d+)"
                         # Use re.search to find the match
                         match = re.search(pattern, date)
                         # Check if there is a match and extract the result
