@@ -3,6 +3,46 @@ from scrapy import signals
 import requests
 from tqdm import tqdm
 import os
+from sqlalchemy import create_engine, Column, Integer, String, Date
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import ARRAY
+
+
+Base = declarative_base()
+
+
+class Newspaper(Base):
+    __tablename__ = "official_newspaper"
+    id = Column(String, primary_key=True)
+    path = Column(String)
+
+
+engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+
+
+def storeOfficialNewspaper(newsPaper):
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        # Check if the law text already exists
+        existing_news_paper = session.query(Newspaper).get(newsPaper["id"])
+        if existing_news_paper:
+            # Update existing record
+            existing_news_paper.path = newsPaper["path"]
+        else:
+            # Insert new record
+            new_news_paper = Newspaper(
+                id=newsPaper["id"],
+                path=newsPaper["path"],
+            )
+            session.add(new_news_paper)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"Error inserting/updating newspaper: {e}")
+    finally:
+        session.close()
 
 
 class JoradpSpider(scrapy.Spider):
@@ -19,6 +59,7 @@ class JoradpSpider(scrapy.Spider):
         return spider
 
     def parse(self, response):
+        Base.metadata.create_all(engine)
         # Step 2: Extract href attribute from the specified element
         href = "https://www.joradp.dz/JRN/ZA2024.htm"
         if href:
@@ -79,6 +120,14 @@ class JoradpSpider(scrapy.Spider):
                             pdf_file.write(chunk)
 
                     print(f"Downloaded: {year}_{number}.pdf")
+
+                    # inserting the path into the database
+                    newspaper = {'id': f"{year}{int(number)}",
+                                 'path': f"./joradp_pdfs/{year}/{year}_{number}.pdf"}
+                    storeOfficialNewspaper(newsPaper=newspaper)
+
+                    print(f"{newspaper} has been inserted in the db")
+
                 else:
                     print(
                         f"Failed to download {year}_{number}.pdf. Status Code: {response.status_code}")
