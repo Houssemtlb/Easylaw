@@ -57,7 +57,7 @@ class LawText(Base):
 
 
 class Association(Base):
-    __tablename__ = 'law_associations'
+    __tablename__ = "law_associations"
     id_out = Column(Integer, primary_key=True)
     assoc_nom = Column(String, primary_key=True)
     ids_in = Column(ARRAY(Integer))
@@ -252,8 +252,7 @@ def scrape_law_data(law_type):
 
                     next_siblings = []
                     current_element = row
-                    assocObject = {"assoc": "",
-                                   "idOut": object["id"], "idsIn": []}
+                    assocObject = {"assoc": "", "idOut": object["id"], "idsIn": []}
                     sibling_number = 0
                     while True:
                         sibling_number += 1
@@ -307,8 +306,7 @@ def scrape_law_data(law_type):
                                         page_logger.info(log_line)
                                     else:
                                         assoc_td = td_elements[1]
-                                        marg = assoc_td.get_attribute(
-                                            "colspan")
+                                        marg = assoc_td.get_attribute("colspan")
                                         log_line = f"Colspan for assoc_td: {marg}\n"
                                         page_logger.info(log_line)
 
@@ -318,8 +316,7 @@ def scrape_law_data(law_type):
                                                     f"assocObject: {assocObject}\n"
                                                 )
                                                 page_logger.info(log_line)
-                                                allAssoc.append(
-                                                    assocObject.copy())
+                                                allAssoc.append(assocObject.copy())
                                                 log_line = f"All law Assoc until now: {allAssoc}\n"
                                                 page_logger.info(log_line)
 
@@ -339,8 +336,7 @@ def scrape_law_data(law_type):
 
                                         else:
                                             law_td = td_elements[0]
-                                            marg = law_td.get_attribute(
-                                                "colspan")
+                                            marg = law_td.get_attribute("colspan")
                                             log_line = f"Colspan for law_td (2nd check): {marg}\n"
                                             page_logger.info(log_line)
 
@@ -368,35 +364,30 @@ def scrape_law_data(law_type):
                                                             )
                                                         )
                                                         log_line = f"Law ID href: {id_element_href}\n"
-                                                        page_logger.info(
-                                                            log_line)
+                                                        page_logger.info(log_line)
 
                                                         match = re.search(
                                                             r"#(\d+)", id_element_href
                                                         )
                                                         id_number = -1
                                                         if match:
-                                                            id_number = match.group(
-                                                                1)
+                                                            id_number = match.group(1)
                                                             assocObject["idsIn"].append(
                                                                 id_number
                                                             )
                                                             log_line = (
                                                                 f"Law ID: {id_number}\n"
                                                             )
-                                                            page_logger.info(
-                                                                log_line)
+                                                            page_logger.info(log_line)
                                                         else:
                                                             pass
                                                             log_line = f"Error finding law id!\n"
-                                                            page_logger.info(
-                                                                log_line)
+                                                            page_logger.info(log_line)
 
                                                     else:
                                                         pass
                                                         log_line = f"Processing another law for the association\n"
-                                                        page_logger.info(
-                                                            log_line)
+                                                        page_logger.info(log_line)
                                                 else:
                                                     pass
                                                     # association law data
@@ -464,8 +455,7 @@ def scrape_law_data(law_type):
                             journalDay, journalMonth, _ = jornal_date_str.split()
                             journalMonth = arabic_months[journalMonth]
                             object["journalDate"] = (
-                                journalYear + "-" +
-                                str(journalMonth) + "-" + journalDay
+                                journalYear + "-" + str(journalMonth) + "-" + journalDay
                             )
 
                             object["journalDate"] = dt.fromisoformat(
@@ -521,8 +511,7 @@ def scrape_law_data(law_type):
                             journalDay, journalMonth, _ = jornal_date_str.split()
                             journalMonth = arabic_months[journalMonth]
                             object["journalDate"] = (
-                                journalYear + "-" +
-                                str(journalMonth) + "-" + journalDay
+                                journalYear + "-" + str(journalMonth) + "-" + journalDay
                             )
 
                             object["journalDate"] = dt.fromisoformat(
@@ -558,26 +547,27 @@ def scrape_law_data(law_type):
                 page_logger.info(log_line)
                 print(log_line)
 
-                if (i != number_of_pages):
+                if i != number_of_pages:
                     next_page_button = WebDriverWait(driver, 60).until(
                         EC.element_to_be_clickable(
-                            (By.XPATH,
-                             "//a[@href=\"javascript:Sauter('a',3);\"]")
+                            (By.XPATH, "//a[@href=\"javascript:Sauter('a',3);\"]")
                         )
                     )
                     next_page_button.click()
 
-                    expected_number = ((i+1) * 200) + 1
+                    expected_number = ((i + 1) * 200) + 1
 
                     def check_page(driver):
                         element_text = driver.find_element(
-                            By.XPATH, '//*[@id="tex"]').text
+                            By.XPATH, '//*[@id="tex"]'
+                        ).text
                         pattern = r"من (\d+) إلى"
                         match = re.search(pattern, element_text)
                         if match:
                             found_number = int(match.group(1))
                             print(
-                                f"Found text: '{element_text}'. Extracted number: {found_number}. Expected number: {expected_number}.")
+                                f"Found text: '{element_text}'. Extracted number: {found_number}. Expected number: {expected_number}."
+                            )
                             return found_number == expected_number
                         else:
                             print(f"No match found in text: '{element_text}'")
@@ -651,8 +641,7 @@ def storeLawAssociations(associations):
         for assoc_data in associations:
             # Directly attempt to retrieve the specific association using both parts of the composite key
             existing_assoc = session.query(Association).get(
-                {"id_out": assoc_data["idOut"],
-                    "assoc_nom": assoc_data["assoc"]}
+                {"id_out": assoc_data["idOut"], "assoc_nom": assoc_data["assoc"]}
             )
 
             if existing_assoc:
@@ -692,8 +681,7 @@ if __name__ == "__main__":
     driver.get("https://www.joradp.dz/HAR/Index.htm")
 
     # Switch to the frame with src="ATitre.htm"
-    driver.switch_to.frame(driver.find_element(
-        By.XPATH, '//frame[@src="ATitre.htm"]'))
+    driver.switch_to.frame(driver.find_element(By.XPATH, '//frame[@src="ATitre.htm"]'))
 
     # Wait for an element on the page to indicate that it's fully loaded
     WebDriverWait(driver, 60).until(
@@ -713,8 +701,7 @@ if __name__ == "__main__":
     # Switch back to the default content before switching to another frame
     driver.switch_to.default_content()
     # Switch to the frame with name="FnCli"
-    driver.switch_to.frame(driver.find_element(
-        By.XPATH, '//frame[@name="FnCli"]'))
+    driver.switch_to.frame(driver.find_element(By.XPATH, '//frame[@name="FnCli"]'))
 
     # Find the input field and enter '01/01/1964'
     select_input = WebDriverWait(driver, 60).until(
