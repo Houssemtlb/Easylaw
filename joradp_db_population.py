@@ -44,7 +44,7 @@ Base = declarative_base()
 
 
 class LawText(Base):
-    __tablename__ = "text"
+    __tablename__ = "laws"
     id = Column(Integer, primary_key=True, autoincrement=False)
     text_type = Column(String)
     text_number = Column(String)
@@ -57,7 +57,7 @@ class LawText(Base):
 
 
 class Association(Base):
-    __tablename__ = "law_associations"
+    __tablename__ = "laws_associations"
     id_out = Column(Integer, primary_key=True)
     assoc_nom = Column(String, primary_key=True)
     ids_in = Column(ARRAY(Integer))
@@ -203,7 +203,7 @@ def scrape_law_data(law_type):
                 # Iterate through the matching rows
                 page_logger = setup_logger(
                     f"page_{i}_{law_type}",
-                    f"./pages_scraping_logs/{law_type}/page_{i}.log",
+                    f"./pages_scraping_logs/{law_type}/page{i}.log",
                 )
                 page_logger.info(f"Starting scrape for {law_type}, page {i}")
                 row_number = 0
