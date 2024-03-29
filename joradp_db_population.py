@@ -80,20 +80,13 @@ arabic_months = {
     "ديسمبر": "12",
 }
 
-total_number_of_laws = 0
-total_number_of_associations = 0
-
-
 def scrape_law_data(law_type):
-    global total_number_of_laws
-    global total_number_of_associations
-
     number_of_pages = 0
     i = 0
     j = 0
     lawTexts = []
     allAssoc = []
-    number_of_laws_in_this_type = 0
+
     while i <= number_of_pages:
         i = 0
         print(f"TRY NUMBER {j + 1} FOR {law_type}!!!")
@@ -105,7 +98,7 @@ def scrape_law_data(law_type):
 
             options = Options()
             options.add_argument("--disable-gpu")
-            # options.add_argument("--headless=new")
+            options.add_argument("--headless=new")
             driver = webdriver.Chrome(options=options)
 
             # Open the website
@@ -252,161 +245,93 @@ def scrape_law_data(law_type):
                     object["id"] = int(id_number)
 
                     next_siblings = []
-                    current_element = row
                     assocObject = {"assoc": "", "idOut": object["id"], "idsIn": []}
-                    sibling_number = 0
-                    while True:
-                        sibling_number += 1
-                        log_line = f"----------------- \n Following sibling number: {sibling_number}\n"
-                        page_logger.info(log_line)
-                        following_sibling_found = current_element.find_elements(
-                            By.XPATH, "following-sibling::tr[1]"
-                        )
-                        try:
-                            if following_sibling_found:
-                                following_sibling = following_sibling_found[0]
-                                log_line = (
-                                    f" ----------------- \n Following sibling found\n"
-                                )
-                                page_logger.info(log_line)
+                    
+                    log_line = (
+                        f" ----------------- \n Getting siblings...\n"
+                    )
+                    page_logger.info(log_line)
+                    script = """
+                    var currentElement = arguments[0];
+                    var siblings = [];
+                    var nextSibling = currentElement.nextElementSibling;
+                    while (nextSibling) {
+                        if (nextSibling.getAttribute('bgcolor') === '#78a7b9') {
+                            break; // Stop if the sibling with the specified bgcolor is found
+                        }
+                        siblings.push(nextSibling); // Add the sibling to the list
+                        nextSibling = nextSibling.nextElementSibling; // Move to the next sibling
+                    }
+                    return siblings; // Return the collected siblings
+                    """
 
-                                log_line = f"Following sibling Text: \n {following_sibling.text}\n"
-                                page_logger.info(log_line)
+                    # Execute the script and get the list of siblings until a specific bgcolor or the end
+                    siblings = driver.execute_script(script, row)
+                    log_line = (
+                        f" ----------------- \n Got siblings...\n"
+                    )
+                    page_logger.info(log_line)
 
-                                sibling_bgcolor = following_sibling.get_attribute(
-                                    "bgcolor"
-                                )
-                                log_line = f"Sibling bgcolor: {sibling_bgcolor}\n"
-                                page_logger.info(log_line)
+                    log_line = (
+                        f" ----------------- \n Processing siblings...\n"
+                    )
+                    page_logger.info(log_line)
+                    
+                    assocObject = {"assoc": "", "idOut": object["id"], "idsIn": []}
+                    # Now 'siblings' will be a list of WebElement objects that you can loop through in Python
+                    for following_sibling in siblings:
+                        script = """
+                        var followingSibling = arguments[0];
+                        var tdElements = followingSibling.querySelectorAll('td');
+                        var result = {
+                            'siblingBgColor': followingSibling.getAttribute('bgcolor'),
+                            'tdElements': Array.from(tdElements).map(td => ({
+                                'colspan': td.getAttribute('colspan'),
+                                'bgcolor': td.getAttribute('bgcolor'),
+                                'text': td.querySelector('font') ? td.querySelector('font').textContent : '',
+                                'href': td.querySelector('a') ? td.querySelector('a').getAttribute('href') : ''
+                            }))
+                        };
 
-                                if sibling_bgcolor == "#78a7b9":
-                                    log_line = f"***********\n Next law found\n ***********\n**************\n"
-                                    page_logger.info(log_line)
+                        return result;                        
+                        """
+                        # Execute script
+                        script_result = driver.execute_script(script, following_sibling)
 
-                                    if assocObject["assoc"] != "":
-                                        log_line = f"assocObject: {assocObject}\n"
-                                        page_logger.info(log_line)
+                        # Process the result
+                        td_elements = script_result['tdElements']
 
-                                        allAssoc.append(assocObject.copy())
-                                        log_line = f"All law Assoc: {allAssoc}\n"
-                                        page_logger.info(log_line)
-
-                                    break
-                                else:
-                                    td_elements = following_sibling.find_elements(
-                                        By.XPATH, ".//td"
-                                    )
-                                    law_td = td_elements[0]
-                                    marg = law_td.get_attribute("colspan")
-                                    log_line = f"Colspan for law_td: {marg}\n"
-                                    page_logger.info(log_line)
-
-                                    if marg == "6":
-                                        next_siblings.append(following_sibling)
-                                        log_line = f"Added to next_siblings\n"
-                                        page_logger.info(log_line)
-                                    else:
-                                        assoc_td = td_elements[1]
-                                        marg = assoc_td.get_attribute("colspan")
-                                        log_line = f"Colspan for assoc_td: {marg}\n"
-                                        page_logger.info(log_line)
-
-                                        if marg == "5":
-                                            if assocObject["assoc"] != "":
-                                                log_line = (
-                                                    f"assocObject: {assocObject}\n"
-                                                )
-                                                page_logger.info(log_line)
-                                                allAssoc.append(assocObject.copy())
-                                                log_line = f"All law Assoc until now: {allAssoc}\n"
-                                                page_logger.info(log_line)
-
-                                            assoc = assoc_td.find_element(
-                                                By.TAG_NAME, "font"
-                                            )
-                                            assocObject = {
-                                                "assoc": "",
-                                                "idOut": object["id"],
-                                                "idsIn": [],
-                                            }
-                                            assocObject["assoc"] = assoc.text
-                                            log_line = (
-                                                f"Association text: {assoc.text}\n"
-                                            )
-                                            page_logger.info(log_line)
-
-                                        else:
-                                            law_td = td_elements[0]
-                                            marg = law_td.get_attribute("colspan")
-                                            log_line = f"Colspan for law_td (2nd check): {marg}\n"
-                                            page_logger.info(log_line)
-
-                                            if marg == "2":
-                                                if len(td_elements) == 3:
-                                                    law_td = td_elements[2]
-                                                    color = law_td.get_attribute(
-                                                        "bgcolor"
-                                                    )
-                                                    log_line = (
-                                                        f"Law_td bgcolor: {color}\n"
-                                                    )
-                                                    page_logger.info(log_line)
-
-                                                    if color == "#9ec7d7":
-                                                        law_td = td_elements[1]
-                                                        id_element = (
-                                                            law_td.find_element(
-                                                                By.TAG_NAME, "a"
-                                                            )
-                                                        )
-                                                        id_element_href = (
-                                                            id_element.get_attribute(
-                                                                "href"
-                                                            )
-                                                        )
-                                                        log_line = f"Law ID href: {id_element_href}\n"
-                                                        page_logger.info(log_line)
-
-                                                        match = re.search(
-                                                            r"#(\d+)", id_element_href
-                                                        )
-                                                        id_number = -1
-                                                        if match:
-                                                            id_number = match.group(1)
-                                                            assocObject["idsIn"].append(
-                                                                id_number
-                                                            )
-                                                            log_line = (
-                                                                f"Law ID: {id_number}\n"
-                                                            )
-                                                            page_logger.info(log_line)
-                                                        else:
-                                                            pass
-                                                            log_line = f"Error finding law id!\n"
-                                                            page_logger.info(log_line)
-
-                                                    else:
-                                                        pass
-                                                        log_line = f"Processing another law for the association\n"
-                                                        page_logger.info(log_line)
-                                                else:
-                                                    pass
-                                                    # association law data
-                                                    log_line = f"association law data\n"
-                                                    page_logger.info(log_line)
-                                            else:
-                                                pass
-                                                log_line = f"No matching conditions for association law\n"
-                                                page_logger.info(log_line)
-                            else:
-                                pass
-                                # the last element in the page
-                                break
-                        except Exception as e:
-                            log_line = f"Error in processing: {e}\n"
+                        if td_elements[0]['colspan'] == "6":
+                            next_siblings.append(following_sibling)
+                            log_line = f"Added to next_siblings: {following_sibling.text}\n"
                             page_logger.info(log_line)
 
-                        current_element = following_sibling
+                        elif td_elements[1]['colspan'] == "5":
+                            if assocObject["assoc"] != "":
+                                allAssoc.append(assocObject.copy())
+                            assocObject["assoc"] = td_elements[1]['text']
+                            log_line = f"Association: {assocObject["assoc"]}\n"
+                            page_logger.info(log_line)
+                        elif td_elements[0]['colspan'] == "2" and len(td_elements) == 3 and td_elements[2]['bgcolor'] == "#9ec7d7":
+                            id_element_href = td_elements[1]['href']
+                            log_line = f"Association Law ID href: {id_element_href}\n"
+                            page_logger.info(log_line)
+                            match = re.search(r"#(\d+)", id_element_href)
+                            if match:
+                                id_number = match.group(1)
+                                assocObject["idsIn"].append(id_number)
+                    if assocObject["assoc"] != "":
+                        allAssoc.append(assocObject.copy())
+
+                    log_line = (
+                        f" ----------------- \n Processed siblings...\n"
+                    )
+                    page_logger.info(log_line)
+
+                    log_line = (
+                        f" ----------------- \n Processing the law...\n"
+                    )
+                    page_logger.info(log_line)
 
                     if len(next_siblings) == 4:
                         var1 = next_siblings[0].text
@@ -524,25 +449,46 @@ def scrape_law_data(law_type):
                     else:
                         log_line = f" \n \n \n ERROR\n"
                         page_logger.info(log_line)
-
-                total_number_of_laws += len(lawTexts)
-                number_of_laws_in_this_type += len(lawTexts)
-                storeLawText(lawTexts)
+                    
+                    log_line = (
+                        f" ----------------- \n Processed the law...\n"
+                    )
+                    page_logger.info(log_line)
 
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n lawTexts {lawTexts}\n"
                 page_logger.info(log_line)
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of lawTexts {len(lawTexts)}\n"
                 page_logger.info(log_line)
 
-                #print("total_number_of_laws until now: ", total_number_of_laws)
-
-                total_number_of_associations += len(allAssoc)
-                storeLawAssociations(allAssoc)
-
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n allAssoc {allAssoc}\n"
                 page_logger.info(log_line)
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of allAssoc {len(allAssoc)}\n"
                 page_logger.info(log_line)
+                
+                log_line = (
+                    f" ----------------- \n Storing the laws in db...\n"
+                )
+                page_logger.info(log_line)
+
+                storeLawText(lawTexts)
+                
+                log_line = (
+                    f" ----------------- \n Stored the laws in db...\n"
+                )
+                page_logger.info(log_line)
+
+                log_line = (
+                    f" ----------------- \n Storing the assoc in db...\n"
+                )
+                page_logger.info(log_line)
+
+                storeLawAssociations(allAssoc)
+
+                log_line = (
+                    f" ----------------- \n Stored the assoc in db...\n"
+                )
+                page_logger.info(log_line)
+
 
                 log_line = f" \n Finished scraping page {i} of {law_type} with {len(lawTexts)} law and {len(allAssoc)} assoc \n"
                 page_logger.info(log_line)
@@ -581,11 +527,9 @@ def scrape_law_data(law_type):
                 i = i + 1
 
         except TimeoutException as e:
-            total_number_of_laws -= number_of_laws_in_this_type
             log_line = f"TimeoutException: {e} RETRYING..."
             print(log_line)
         except Exception as e:
-            total_number_of_laws -= number_of_laws_in_this_type
             log_line = f"ERROR !!!!: {e} RETRYING..."
             print(log_line)
         finally:
@@ -676,7 +620,7 @@ if __name__ == "__main__":
     # Initialize ChromeOptions
     options = Options()
     options.add_argument("--disable-gpu")
-    # options.add_argument("--headless=new")
+    options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
     # Open the website
@@ -725,6 +669,3 @@ if __name__ == "__main__":
     with multiprocessing.Pool(processes=3) as pool:
         for result in pool.imap(scrape_law_data, law_types_iterator):
             pass
-
-    #print("total_number_of_laws: ", total_number_of_laws)
-    #print("total_number_of_associations: ", total_number_of_associations)
