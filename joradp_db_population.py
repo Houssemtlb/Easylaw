@@ -533,7 +533,7 @@ def scrape_law_data(law_type):
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of lawTexts {len(lawTexts)}\n"
                 page_logger.info(log_line)
 
-                print("total_number_of_laws until now: ", total_number_of_laws)
+                #print("total_number_of_laws until now: ", total_number_of_laws)
 
                 total_number_of_associations += len(allAssoc)
                 storeLawAssociations(allAssoc)
@@ -724,5 +724,5 @@ if __name__ == "__main__":
         for result in pool.imap(scrape_law_data, law_types_iterator):
             pass
 
-    print("total_number_of_laws: ", total_number_of_laws)
-    print("total_number_of_associations: ", total_number_of_associations)
+    #print("total_number_of_laws: ", total_number_of_laws)
+    #print("total_number_of_associations: ", total_number_of_associations)
