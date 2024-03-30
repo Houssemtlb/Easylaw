@@ -3,11 +3,9 @@ from scrapy import signals
 import requests
 from tqdm import tqdm
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Date
+from sqlalchemy import create_engine, Column, String
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.dialects.postgresql import ARRAY
-
 
 Base = declarative_base()
 
