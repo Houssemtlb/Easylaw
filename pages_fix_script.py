@@ -1,28 +1,10 @@
-import multiprocessing
-import time
-import re
 import scrapy
 from scrapy import signals
-import requests
-from tqdm import tqdm
-import os
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.options import Options
 from datetime import date as dt
 from sqlalchemy import and_, create_engine, Column, Integer, String, Date
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.dialects.postgresql import ARRAY
 from bs4 import BeautifulSoup
-
-import logging
-import random
-
 
 Base = declarative_base()
 
