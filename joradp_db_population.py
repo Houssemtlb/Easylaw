@@ -39,6 +39,10 @@ def setup_logger(name, log_file, level=logging.INFO):
 
     return logger
 
+main_logger = setup_logger(
+                    f"main_program_logs",
+                    f"./pages_scraping_logs/main_program_logs.log",
+                )
 
 Base = declarative_base()
 
@@ -89,7 +93,9 @@ def scrape_law_data(law_type):
 
     while i <= number_of_pages:
         i = 0
-        print(f"TRY NUMBER {j + 1} FOR {law_type}!!!")
+        log_line = f"TRY NUMBER {j + 1} FOR {law_type}!!!"
+        main_logger.info(log_line)
+        print(log_line)
 
         try:
             random_duration = random.randint(3, 10)
@@ -478,7 +484,7 @@ def scrape_law_data(law_type):
                 )
                 page_logger.info(log_line)
 
-                storeLawText(lawTexts)
+                storeLawText(lawTexts, page_logger)
                 
                 log_line = (
                     f" ----------------- \n Stored the laws in db...\n"
@@ -490,7 +496,7 @@ def scrape_law_data(law_type):
                 )
                 page_logger.info(log_line)
 
-                storeLawAssociations(allAssoc)
+                storeLawAssociations(allAssoc, page_logger)
 
                 log_line = (
                     f" ----------------- \n Stored the assoc in db...\n"
@@ -520,35 +526,50 @@ def scrape_law_data(law_type):
                         match = re.search(pattern, element_text)
                         if match:
                             found_number = int(match.group(1))
-                            print(
-                                f"Found text: '{element_text}'. Extracted number: {found_number}. Expected number: {expected_number}."
-                            )
+                            log_line = f"Found text: '{element_text}'. Extracted number: {found_number}. Expected number: {expected_number}."
+                            page_logger.info(log_line)
+                            main_logger.info(log_line)
+                            print(log_line)
+
                             return found_number == expected_number
                         else:
-                            print(f"No match found in text: '{element_text}'")
+                            log_line = f"No match found in text: '{element_text}'"
+                            page_logger.info(log_line)
+                            main_logger.info(log_line)
+                            print(log_line)
                             return False
 
-                    print("expected_number", expected_number)
+                    log_line = f"expected_number {expected_number}"
+                    page_logger.info(log_line)
+                    main_logger.info(log_line)
+                    print(log_line)
                     WebDriverWait(driver, 180, 2).until(check_page)
-                    print(f"Successfully navigated to page {i + 1}")
+                    log_line = f"Successfully navigated to page {i + 1}"
+                    page_logger.info(log_line)
+                    main_logger.info(log_line)
+                    print(log_line)
 
                 i = i + 1
 
         except TimeoutException as e:
             log_line = f"TimeoutException: {e} RETRYING..."
             print(log_line)
+            main_logger.info(log_line)
+
         except Exception as e:
             log_line = f"ERROR !!!!: {e} RETRYING..."
             print(log_line)
+            main_logger.info(log_line)
         finally:
             driver.quit()
             j += 1
 
     log_line = f"PROGRAM ENDED AFTER {j + 1} TRIES FOR {law_type}!!!"
     print(log_line)
+    main_logger.info(log_line)
 
 
-def storeLawText(lawTexts):
+def storeLawText(lawTexts, page_logger):
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
@@ -580,14 +601,21 @@ def storeLawText(lawTexts):
                 )
                 session.add(new_law_text)
         session.commit()
+        log_line = (
+            f" ----------------- \n lawTexts stored in db successfully and committed...\n"
+        )
+        page_logger.info(log_line)
     except Exception as e:
         session.rollback()
-        print(f"Error inserting/updating law text: {e}")
+        log_line = (
+            f"Error inserting/updating law text: {e}"
+        )
+        page_logger.info(log_line)
     finally:
         session.close()
 
 
-def storeLawAssociations(associations):
+def storeLawAssociations(associations, page_logger):
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
@@ -611,10 +639,17 @@ def storeLawAssociations(associations):
 
         # Commit the session once all associations have been processed
         session.commit()
+        log_line = (
+            f" ----------------- \n associations stored in db successfully and committed...\n"
+        )
+        page_logger.info(log_line)
     except Exception as e:
         # If any exception occurs, rollback the session to avoid partial commits
         session.rollback()
-        print(f"Error in storing/updating associations: {e}")
+        log_line = (
+            f"Error in storing/updating associations: {e}"
+        )
+        page_logger.info(log_line)
     finally:
         # Ensure the session is closed properly in a finally block
         session.close()
@@ -669,6 +704,7 @@ if __name__ == "__main__":
         law_types.append(option.text)
     law_types = law_types[1:]
     print(law_types)
+    main_logger.info(law_types)
     driver.quit()
 
     # law_types = ['أمر', 'منشور', 'منشور وزاري مشترك', 'لائحة', 'مداولة', 'مداولة م-أ-للدولة', 'مرسوم', 'مرسوم تنفيذي', 'مرسوم تشريعي', 'مرسوم رئاسي', 'مقرر', 'مقرر وزاري مشترك', 'إعلان', 'نظام', 'اتفاقية', 'تصريح', 'تقرير', 'تعليمة', 'تعليمة وزارية مشتركة', 'جدول', 'رأي', 'قانون', 'قانون عضوي', 'قرار', 'قرار ولائي', 'قرار وزاري مشترك']
