@@ -367,7 +367,9 @@ def scrape_law_data(law_type):
                             object["signatureDate"] = dt.fromisoformat(
                                 object["signatureDate"]
                             )
-
+                        else:
+                            object["signatureDate"] = dt.fromisoformat("9999-12-31")
+                            
                         object["ministry"] = next_siblings[1].text
 
                         date = next_siblings[2].text
@@ -387,6 +389,8 @@ def scrape_law_data(law_type):
                             object["journalDate"] = dt.fromisoformat(
                                 object["journalDate"]
                             )
+                        else:
+                            object["journalDate"] = dt.fromisoformat("9999-12-31")
 
                         object["content"] = next_siblings[3].text
                         lawTexts.append(object.copy())
@@ -425,7 +429,9 @@ def scrape_law_data(law_type):
                             object["signatureDate"] = dt.fromisoformat(
                                 object["signatureDate"]
                             )
-
+                        else:
+                            object["signatureDate"] = dt.fromisoformat("9999-12-31")
+                        
                         date = next_siblings[1].text
                         # Define the regular expression pattern
                         pattern = r"في (\d+ [^\s]+ \d+)"
@@ -443,6 +449,8 @@ def scrape_law_data(law_type):
                             object["journalDate"] = dt.fromisoformat(
                                 object["journalDate"]
                             )
+                        else:
+                            object["journalDate"] = dt.fromisoformat("9999-12-31")
 
                         object["content"] = next_siblings[2].text
                         lawTexts.append(object.copy())
@@ -664,6 +672,8 @@ if __name__ == "__main__":
     driver.quit()
 
     # law_types = ['أمر', 'منشور', 'منشور وزاري مشترك', 'لائحة', 'مداولة', 'مداولة م-أ-للدولة', 'مرسوم', 'مرسوم تنفيذي', 'مرسوم تشريعي', 'مرسوم رئاسي', 'مقرر', 'مقرر وزاري مشترك', 'إعلان', 'نظام', 'اتفاقية', 'تصريح', 'تقرير', 'تعليمة', 'تعليمة وزارية مشتركة', 'جدول', 'رأي', 'قانون', 'قانون عضوي', 'قرار', 'قرار ولائي', 'قرار وزاري مشترك']
+
+    law_types = ['رأي']
 
     law_types_iterator = iter(law_types)
     with multiprocessing.Pool(processes=3) as pool:
