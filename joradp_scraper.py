@@ -6,6 +6,33 @@ import os
 from sqlalchemy import create_engine, Column, String
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+import logging
+
+
+def setup_logger(name, log_file, level=logging.INFO):
+    """Function to setup as many loggers as you want"""
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s : \n %(message)s \n"
+    )
+    handler = logging.FileHandler(
+        log_file, encoding="utf-8", mode="w"
+    )  # use 'a' if you want to keep history or 'w' if you want to override file content
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    # Prevent the logger from propagating messages to the root logger
+    logger.propagate = False
+
+    return logger
+
+main_logger = setup_logger(
+                    f"pdf_scraping_logs",
+                    f"./pdf_scraping_logs.log",
+                )
 
 Base = declarative_base()
 
@@ -38,7 +65,7 @@ def storeOfficialNewspaper(newsPaper):
         session.commit()
     except Exception as e:
         session.rollback()
-        print(f"Error inserting/updating newspaper: {e}")
+        main_logger.info(f"Error inserting/updating newspaper: {e}")
     finally:
         session.close()
 
@@ -118,7 +145,7 @@ class JoradpSpider(scrapy.Spider):
                         for chunk in response.iter_content(chunk_size=128):
                             pdf_file.write(chunk)
 
-                    print(f"Downloaded: {year}_{number}.pdf")
+                    main_logger.info(f"Downloaded: {year}_{number}.pdf")
 
                     # inserting the path into the database
                     newspaper = {
@@ -127,9 +154,9 @@ class JoradpSpider(scrapy.Spider):
                     }
                     storeOfficialNewspaper(newsPaper=newspaper)
 
-                    print(f"{newspaper} has been inserted in the db")
+                    main_logger.info(f"{newspaper} has been inserted in the db")
 
                 else:
-                    print(
+                    main_logger.info(
                         f"Failed to download {year}_{number}.pdf. Status Code: {response.status_code}"
                     )
