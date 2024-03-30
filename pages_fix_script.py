@@ -10,7 +10,7 @@ Base = declarative_base()
 
 
 class LawText(Base):
-    __tablename__ = "text"
+    __tablename__ = "laws"
     id = Column(Integer, primary_key=True, autoincrement=False)
     text_type = Column(String)
     text_number = Column(String)
