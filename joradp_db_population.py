@@ -462,7 +462,7 @@ def scrape_law_data(law_type):
                         lawTexts.append(object.copy())
                     else:
                         log_line = f" \n \n \n ERROR\n"
-                        page_logger.info(log_line)
+                        page_logger.error(log_line)
                     
                     log_line = (
                         f" ----------------- \n Processed the law...\n"
@@ -554,12 +554,12 @@ def scrape_law_data(law_type):
         except TimeoutException as e:
             log_line = f"TimeoutException: {e} RETRYING..."
             print(log_line)
-            main_logger.info(log_line)
+            main_logger.error(log_line)
 
         except Exception as e:
             log_line = f"ERROR !!!!: {e} RETRYING..."
             print(log_line)
-            main_logger.info(log_line)
+            main_logger.error(log_line)
         finally:
             driver.quit()
             j += 1
@@ -610,7 +610,7 @@ def storeLawText(lawTexts, page_logger):
         log_line = (
             f"Error inserting/updating law text: {e}"
         )
-        page_logger.info(log_line)
+        page_logger.error(log_line)
     finally:
         session.close()
 
@@ -649,7 +649,7 @@ def storeLawAssociations(associations, page_logger):
         log_line = (
             f"Error in storing/updating associations: {e}"
         )
-        page_logger.info(log_line)
+        page_logger.error(log_line)
     finally:
         # Ensure the session is closed properly in a finally block
         session.close()
