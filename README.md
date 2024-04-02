@@ -22,3 +22,14 @@ python .\joradp_db_population.py
 ```
 python .\pages_fix_script.py
 ```
+### Convert pdfs to images:
+
+```
+python3 convert_pdfs_to_images.py
+```
+
+### Perform ocr on images:
+
+```
+python3 ocr_images.py
+```
