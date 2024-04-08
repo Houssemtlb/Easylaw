@@ -29,10 +29,11 @@ def setup_logger(name, log_file, level=logging.INFO):
 
     return logger
 
+
 main_logger = setup_logger(
-                    f"pdf_scraping_logs",
-                    f"./pdf_scraping_logs.log",
-                )
+    f"pdf_scraping_logs",
+    f"./pdf_scraping_logs.log",
+)
 
 Base = declarative_base()
 
@@ -77,8 +78,10 @@ class JoradpSpider(scrapy.Spider):
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
-        spider = super(JoradpSpider, cls).from_crawler(crawler, *args, **kwargs)
-        crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
+        spider = super(JoradpSpider, cls).from_crawler(
+            crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed,
+                                signal=signals.spider_closed)
         return spider
 
     def parse(self, response):
@@ -107,7 +110,8 @@ class JoradpSpider(scrapy.Spider):
                     "TE": "trailers",
                 }
                 yield scrapy.Request(
-                    url, headers=headers, callback=self.parse_year, meta={"year": year}
+                    url, headers=headers, callback=self.parse_year, meta={
+                        "year": year}
                 )
 
     def parse_year(self, response):
@@ -128,7 +132,10 @@ class JoradpSpider(scrapy.Spider):
             max = numbers[0]
             for number in tqdm(numbers, desc=f"Downloading PDFs for {year}"):
                 if int(max) > 99:
-                    pdf_url = f"{base_url}{year}/A{year}{number}.pdf"
+                    if int(year) == 2021:
+                        pdf_url = f"{base_url}{year}/A{year}0{number}.pdf"
+                    else:
+                        pdf_url = f"{base_url}{year}/A{year}{number}.pdf"
                 else:
                     pdf_url = f"{base_url}{year}/A{year}0{number}.pdf"
 
@@ -136,7 +143,7 @@ class JoradpSpider(scrapy.Spider):
 
                 if response.status_code == 200:
                     local_directory = f"joradp_pdfs/{year}"
-                    local_file_path = f"{local_directory}/{year}_{number}.pdf"
+                    local_file_path = f"{local_directory}/{year}_{int(number)}.pdf"
 
                     # Create directory if it doesn't exist
                     os.makedirs(local_directory, exist_ok=True)
@@ -150,11 +157,12 @@ class JoradpSpider(scrapy.Spider):
                     # inserting the path into the database
                     newspaper = {
                         "id": f"{year}{int(number)}",
-                        "path": f"./joradp_pdfs/{year}/{year}_{number}.pdf",
+                        "path": f"./joradp_pdfs/{year}/{year}_{int(number)}.pdf",
                     }
                     storeOfficialNewspaper(newsPaper=newspaper)
 
-                    main_logger.info(f"{newspaper} has been inserted in the db")
+                    main_logger.info(
+                        f"{newspaper} has been inserted in the db")
 
                 else:
                     main_logger.info(
