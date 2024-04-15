@@ -1,6 +1,7 @@
 __pycashe__
 *.pyc
 joradp_pdfs
+joradp_pdfs_b
 .ipynb_checkpoints
 *.ipynb
 pages_scraping_logs
@@ -9,3 +10,4 @@ BDD_backup.sql
 pdf_scraping_logs.log
 pdf_text_extraction_logs_after.log
 pdf_text_extraction_logs_before.log
+env
