@@ -11,3 +11,4 @@ pdf_scraping_logs.log
 pdf_text_extraction_logs_after.log
 pdf_text_extraction_logs_before.log
 env
+conversion.log
