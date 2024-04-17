@@ -1,7 +1,7 @@
 import scrapy
 from scrapy import signals
 from datetime import date as dt
-from sqlalchemy import and_, create_engine, Column, Integer, String, Date
+from sqlalchemy import and_, create_engine, Column, Integer, String, Date,Boolean,Text
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
@@ -20,6 +20,9 @@ class LawText(Base):
     signature_date = Column(Date)
     ministry = Column(String)
     content = Column(String)
+    field = Column(String, default="")
+    long_content = Column(Text,default="")
+    page_fixed = Column(Boolean, default=False)
 
 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")

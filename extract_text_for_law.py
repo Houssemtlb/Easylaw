@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Date, Integer, String, create_engine, Boolean
+from sqlalchemy import Column, Date, Integer, String, create_engine, Boolean, Text
 from sqlalchemy.orm import sessionmaker
 import os
 from datetime import date as dt
@@ -52,7 +52,7 @@ class LawText(Base):
     ministry = Column(String)
     content = Column(String)
     field = Column(String, default="")
-    long_content = Column(String,default="")
+    long_content = Column(Text,default="")
     page_fixed = Column(Boolean, default=False)
 
 

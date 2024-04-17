@@ -10,7 +10,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from datetime import date as dt
-from sqlalchemy import create_engine, Column, Integer, String, Date, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Date, Boolean, Text
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -59,7 +59,7 @@ class LawText(Base):
     ministry = Column(String)
     content = Column(String)
     field = Column(String, default="")
-    long_content = Column(String,default="")
+    long_content = Column(Text,default="")
     page_fixed = Column(Boolean, default=False)
 
 class Association(Base):
@@ -661,6 +661,7 @@ def storeLawAssociations(associations, page_logger):
 if __name__ == "__main__":
 
     # Create database tables
+    #DONT FORGET TO CHECK IF THE TABLE EXISTS OR NOT BEFORE CREATING IT
     Base.metadata.create_all(engine)
 
     # Initialize ChromeOptions
