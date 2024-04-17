@@ -357,7 +357,7 @@ if __name__ == "__main__":
     options = select_object.options
     for option in options:
         kita3_types.append(option.text)
-    kita3_types = kita3_types[1:]
+    kita3_types = kita3_types[3:]
     print(kita3_types)
     main_logger.info(f"kita3_types : {kita3_types}")
     driver.quit()
