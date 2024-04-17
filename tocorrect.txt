@@ -1,16 +1,19 @@
-tesseract model (+sudo apt-get install tesseract-ocr-ara)
-srapy is installed (fixed by using venv)
-sudo (apt-get install poppler-utils)
 
 
 
-1-fix the requirements.txt
-2-create the script to fill the database with pages content 
-3-create the script to clean and filter the database pages content
-4-create the script to add a field (page_fixed) to the text table to know if the page_num has been treated
-5-create the script to fix the path inside the database of the official newspapers in newspapers table (wewantittobeexactlylikeinthewebsite year/num+zeros)
-6-our code have to workon ubuntu, it is a problem
-7-how do we do to all work on the same database 
+
+-find a solution for corrupted page numbers 
+
+-create the script to extract, clean and filter the database pages content and insert into database (change in the table add contnet and change content->description column to text)
+
+-create the script to change the structure of offcial_newspaper table (change in the table)
+
+-add an associtive array to joradp_db_population that corresponds each ministry to a field,
+and use it to put the field of each text law. (change in the table add field column to text)
+
+-add memory to our pipeline 
+
+
 
 
 

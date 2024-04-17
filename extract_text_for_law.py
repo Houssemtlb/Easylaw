@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Date, Integer, String, create_engine
+from sqlalchemy import Column, Date, Integer, String, create_engine, Boolean
 from sqlalchemy.orm import sessionmaker
 import os
 from datetime import date as dt
@@ -41,7 +41,7 @@ Base = declarative_base()
 
 
 class LawText(Base):
-    __tablename__ = "text"
+    __tablename__ = "laws"
     id = Column(Integer, primary_key=True, autoincrement=False)
     text_type = Column(String)
     text_number = Column(String)
@@ -51,6 +51,9 @@ class LawText(Base):
     signature_date = Column(Date)
     ministry = Column(String)
     content = Column(String)
+    field = Column(String, default="")
+    long_content = Column(String,default="")
+    page_fixed = Column(Boolean, default=False)
 
 
 engine = create_engine('postgresql://postgres:postgres@localhost:5432/easylaw')

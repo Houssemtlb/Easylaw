@@ -10,7 +10,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from datetime import date as dt
-from sqlalchemy import create_engine, Column, Integer, String, Date
+from sqlalchemy import create_engine, Column, Integer, String, Date, Boolean
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -58,7 +58,9 @@ class LawText(Base):
     signature_date = Column(Date)
     ministry = Column(String)
     content = Column(String)
-
+    field = Column(String, default="")
+    long_content = Column(String,default="")
+    page_fixed = Column(Boolean, default=False)
 
 class Association(Base):
     __tablename__ = "laws_associations"
@@ -227,6 +229,7 @@ def scrape_law_data(law_type):
                         "signatureDate": "",
                         "ministry": "",
                         "content": "",
+                        "longContent": "",
                     }
                     # Find the a element within the current row
                     link_element = row.find_element(By.XPATH, ".//td[2]/a")
