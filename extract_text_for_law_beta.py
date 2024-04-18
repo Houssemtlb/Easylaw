@@ -52,7 +52,7 @@ class LawText(Base):
     ministry = Column(String)
     content = Column(String)
     field = Column(String, default="")
-    long_content = Column(Text,default="")
+    long_content = Column(Text, default="")
     page_fixed = Column(Boolean, default=False)
 
 
@@ -123,35 +123,38 @@ def iterate_law_texts():
                     # we can use the trim_before_desired_name function for that
                     if (first_page):
                         all_next_text = trim_before_desired_name(
-                            file.read(), law_title,text_number)
-                        
-                        all_next_text,stop = trim_after_desired_name(
-                                all_next_text, first_page)
-                        if(stop):
+                            file.read(), law_title, text_number)
+
+                        all_next_text, stop = trim_after_desired_name(
+                            all_next_text, first_page)
+                        if (stop):
                             finalText += all_next_text
                             break
                     else:
-                        all_next_text,stop = trim_after_desired_name(
-                                file.read(), first_page)
-                        if(stop):
+                        all_next_text, stop = trim_after_desired_name(
+                            file.read(), first_page)
+                        if (stop):
                             finalText += all_next_text
                             break
-                    
+
                 first_page = False
 
             # Print the retrieved data
             before_logger.info(
                 f"law_title: {law_title}, Journal Num: {journal_num}, Journal Date: {journal_date}")
-            before_logger.info(f"{all_next_text}")
+            before_logger.info(f"{finalText}")
+
+            # insert the long_text in the related row
+            law_text.long_content = finalText
+            session.commit()
 
     except Exception as e:
         print(f"An error occurred: {e}")
 
 
-def trim_before_desired_name(long_text, desired_name,text_number):
+def trim_before_desired_name(long_text, desired_name, text_number):
     lines = long_text.split('\n')
     desired_line_index = None
-    
 
     # Find the line index where the desired name string is present
     for i, line in enumerate(lines):
@@ -161,16 +164,16 @@ def trim_before_desired_name(long_text, desired_name,text_number):
             initial_words = ' '.join(words[:num_words_to_compare])
 
             if fuzz.partial_ratio(desired_name, initial_words) >= 60:
-                #if there is an exact match with text number
+                # if there is an exact match with text number
                 if text_number != None:
                     numbers = text_number.split('-')
                     try:
                         if numbers[1] in line:
                             desired_line_index = i
-                            break 
+                            break
                     except:
                         desired_line_index = i
-                        break 
+                        break
 
     # Remove lines before the desired line
     if desired_line_index is not None:
@@ -178,10 +181,9 @@ def trim_before_desired_name(long_text, desired_name,text_number):
         return '\n'.join(lines)
     else:
         return long_text
-    
 
 
-def trim_after_desired_name(long_text,firstPage):
+def trim_after_desired_name(long_text, firstPage):
     lines = long_text.split('\n')
     desired_line_index = None
     count = 0
@@ -190,18 +192,18 @@ def trim_after_desired_name(long_text,firstPage):
     # Find the line index where the desired name string is present
     for i, line in enumerate(lines):
         words = line.split()
-        for keyword in keywords:  
+        for keyword in keywords:
             num_words_to_compare = len(keyword.split())
             if len(words) >= num_words_to_compare:
                 initial_words = ' '.join(words[:num_words_to_compare])
 
                 if fuzz.partial_ratio(keyword, initial_words) >= 90:
                     count += 1
-                    if(firstPage) and count == 2:
-                        desired_line_index = i 
+                    if (firstPage) and count == 2:
+                        desired_line_index = i
                         stop = True
                         break
-                    elif(not firstPage):
+                    elif (not firstPage):
                         desired_line_index = i
                         stop = True
                     break
@@ -209,10 +211,10 @@ def trim_after_desired_name(long_text,firstPage):
     # Remove lines before the desired line
     if desired_line_index is not None:
         lines = lines[:desired_line_index]
-        return ('\n'.join(lines),stop)
+        return ('\n'.join(lines), stop)
     else:
-        return (long_text,stop)
-    
+        return (long_text, stop)
+
 
 if __name__ == "__main__":
     iterate_law_texts()

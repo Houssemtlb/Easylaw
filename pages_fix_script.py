@@ -1,10 +1,36 @@
 import scrapy
 from scrapy import signals
 from datetime import date as dt
-from sqlalchemy import and_, create_engine, Column, Integer, String, Date,Boolean,Text
+from sqlalchemy import and_, create_engine, Column, Integer, String, Date, Boolean, Text
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
+import logging
+
+def setup_logger(name, log_file, level=logging.INFO):
+    """Function to setup as many loggers as you want"""
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s : \n %(message)s \n"
+    )
+    handler = logging.FileHandler(
+        log_file, encoding="utf-8", mode="w"
+    )  # use 'a' if you want to keep history or 'w' if you want to override file content
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    # Prevent the logger from propagating messages to the root logger
+    logger.propagate = False
+
+    return logger
+
+
+
+
+
 
 Base = declarative_base()
 
@@ -21,7 +47,7 @@ class LawText(Base):
     ministry = Column(String)
     content = Column(String)
     field = Column(String, default="")
-    long_content = Column(Text,default="")
+    long_content = Column(Text, default="")
     page_fixed = Column(Boolean, default=False)
 
 
@@ -32,6 +58,10 @@ session = Session()
 
 
 class JoradpSpider(scrapy.Spider):
+    main_logger = setup_logger(
+        f"pdf_page_fixing_logs",
+        f"./pdf_page_fixing_logs.log",
+    )
     data = {}
     name = 'joradp'
     currentYear = 0
@@ -104,6 +134,24 @@ class JoradpSpider(scrapy.Spider):
                     base_url = f"https://www.joradp.dz/{Lien}/{year}/{processed_number}/A_Pag1.htm"
 
                     yield scrapy.Request(base_url, callback=self.parse_law_text, meta={'year': year, 'number': processed_number})
+            else: 
+                for number in numbers:
+                    start_date = dt(int(year), 1, 1)
+                    end_date = dt(int(year), 12, 31)
+
+                    rowsToCorrect = session.query(LawText).filter(
+                        and_(
+                            LawText.journal_date >= start_date,
+                            LawText.journal_date <= end_date,
+                            LawText.journal_num == int(number)
+                        )
+                    ).all()
+                    if (rowsToCorrect):
+                        for row in rowsToCorrect:
+                            row.page_fixed = True
+                        session.commit()
+                    self.main_logger.info(f"Fixed journal number {number} for the year {year}")
+                    
 
     def parse_law_text(self, response):
         soup = BeautifulSoup(response.body, 'html.parser')
@@ -131,9 +179,27 @@ class JoradpSpider(scrapy.Spider):
                 if (rowsToCorrect):
                     for row in rowsToCorrect:
                         row.journal_page = correctPage
+                        row.page_fixed = True
                     session.commit()
                 correctPage += 1
 
+            self.main_logger.info(f"Fixed journal number {response.meta['number']} for the year {response.meta['year']}")
+        else:
+            start_date = dt(int(response.meta['year']), 1, 1)
+            end_date = dt(int(response.meta['year']), 12, 31)
+
+            rowsToCorrect = session.query(LawText).filter(
+                and_(
+                    LawText.journal_date >= start_date,
+                    LawText.journal_date <= end_date,
+                    LawText.journal_num == int(response.meta['number'])
+                )
+            ).all()
+            if (rowsToCorrect):
+                for row in rowsToCorrect:
+                    row.page_fixed = True
+                session.commit()
+            self.main_logger.info(f"Fixed journal number {response.meta['number']} for the year {response.meta['year']}")
+
     def spider_closed(self, spider):
-        # Perform cleanup or final operations when the spider is closed
         pass

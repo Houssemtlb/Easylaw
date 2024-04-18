@@ -2,22 +2,31 @@
 
 
 
--find a solution for corrupted page numbers 
-
--create the script to extract, clean and filter the database pages content and insert into database (change in the table add contnet and change content->description column to text)
-
--create the script to change the structure of offcial_newspaper table (change in the table)
-
--add an associtive array to joradp_db_population that corresponds each ministry to a field,
-and use it to put the field of each text law. (change in the table add field column to text)
-
--add memory to our pipeline 
 
 
 
 
 
- 
+
+
+
+
+
+
+
+
+
+
+rayane : add previous sraping date concideration to our scripts pipeline for joradp_db_population/ convert_pdfs / ocr_images
+         add fields scraping script to the laws table to notify the subscribed user.
+         find a solution for corrupted page numbers even after executing the script change in the table add contnet and change content->description column to text
+
+
+houssem : add previous sraping date concideration to our scripts pipeline forextract text/ joradp scraper / pages fix 
+          ***create the script to change the structure of offcial_newspaper table (done)
+          *create the script to clean and filter the database pages content and insert into database
+          *create the script to extract text long_content and insert into database (beta done)
+          ***find a solution for corrupted page numbers even after executing the script change in the table (done)
 
 
 

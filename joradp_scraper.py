@@ -41,7 +41,8 @@ Base = declarative_base()
 class Newspaper(Base):
     __tablename__ = "official_newspaper"
     id = Column(String, primary_key=True)
-    path = Column(String)
+    year = Column(String),
+    number = Column(String)
 
 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
@@ -55,12 +56,14 @@ def storeOfficialNewspaper(newsPaper):
         existing_news_paper = session.query(Newspaper).get(newsPaper["id"])
         if existing_news_paper:
             # Update existing record
-            existing_news_paper.path = newsPaper["path"]
+            existing_news_paper.year = newsPaper["year"]
+            existing_news_paper.number = newsPaper["number"]
         else:
             # Insert new record
             new_news_paper = Newspaper(
                 id=newsPaper["id"],
-                path=newsPaper["path"],
+                year = newsPaper["year"],
+                number = newsPaper["number"]
             )
             session.add(new_news_paper)
         session.commit()
@@ -154,10 +157,11 @@ class JoradpSpider(scrapy.Spider):
 
                     main_logger.info(f"Downloaded: {year}_{number}.pdf")
 
-                    # inserting the path into the database
+                    # inserting into the database
                     newspaper = {
                         "id": f"{year}{int(number)}",
-                        "path": f"./joradp_pdfs/{year}/{year}_{int(number)}.pdf",
+                        "year": f"{year}",
+                        "number": f"{int(number)}"
                     }
                     storeOfficialNewspaper(newsPaper=newspaper)
 
