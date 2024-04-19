@@ -41,7 +41,7 @@ Base = declarative_base()
 class Newspaper(Base):
     __tablename__ = "official_newspaper"
     id = Column(String, primary_key=True)
-    year = Column(String),
+    year = Column(String)
     number = Column(String)
 
 
@@ -62,8 +62,8 @@ def storeOfficialNewspaper(newsPaper):
             # Insert new record
             new_news_paper = Newspaper(
                 id=newsPaper["id"],
-                year = newsPaper["year"],
-                number = newsPaper["number"]
+                year=newsPaper["year"],
+                number=newsPaper["number"]
             )
             session.add(new_news_paper)
         session.commit()

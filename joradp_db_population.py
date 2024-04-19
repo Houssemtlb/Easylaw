@@ -319,7 +319,7 @@ def scrape_law_data(law_type):
                             if assocObject["assoc"] != "":
                                 allAssoc.append(assocObject.copy())
                             assocObject["assoc"] = td_elements[1]['text']
-                            log_line = f"Association: {assocObject["assoc"]}\n"
+                            log_line = f"Association: {assocObject['assoc']}\n"
                             page_logger.info(log_line)
                         elif td_elements[0]['colspan'] == "2" and len(td_elements) == 3 and td_elements[2]['bgcolor'] == "#9ec7d7":
                             id_element_href = td_elements[1]['href']
