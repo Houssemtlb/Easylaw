@@ -30,7 +30,7 @@ def convert_pdf_to_images(pdf_path):
             pdf_path=pdf_path,
             output_folder=imgs_dir,
             fmt='jpeg',
-            output_file="page",
+            output_file="journal",
             # Adjust the number of threads as necessary
             thread_count=2,
             paths_only=True,
