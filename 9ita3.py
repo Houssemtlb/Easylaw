@@ -124,7 +124,7 @@ def scrape_kita3_law_data(kita3):
 
             # select category
             select_input = WebDriverWait(driver, 60).until(
-                EC.presence_of_element_located((By.NAME, "znat"))
+                EC.presence_of_element_located((By.NAME, "zsec"))
             )
 
             select_object = Select(select_input)
