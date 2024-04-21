@@ -25,7 +25,7 @@ rayane : add previous sraping date concideration to our scripts pipeline for jor
 houssem : add previous sraping date concideration to our scripts pipeline forextract text/ joradp scraper / pages fix 
           ***create the script to change the structure of offcial_newspaper table (done)
           *create the script to clean and filter the database pages content and insert into database
-          *create the script to extract text long_content and insert into database (beta done)
+          *create the script to extract text long_content and insert into database (done)
           ***find a solution for corrupted page numbers even after executing the script change in the table (done)
 
 
