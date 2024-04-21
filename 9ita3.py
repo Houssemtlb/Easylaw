@@ -21,6 +21,8 @@ import random
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
+    
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s : \n %(message)s \n"
@@ -312,7 +314,8 @@ def scrape_kita3_law_data(kita3):
             print(log_line)
             main_logger.error(log_line)
         finally:
-            driver.quit()
+            if driver is not None:
+                driver.quit()
             j += 1
 
     log_line = f"PROGRAM ENDED AFTER {j + 1} TRIES FOR {kita3}!!!"
