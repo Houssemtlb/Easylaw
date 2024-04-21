@@ -79,6 +79,11 @@ def scrape_kita3_law_data(kita3):
         print(log_line)
 
         try:
+            page_logger = setup_logger(
+                f"page_{i}_{kita3}",
+                f"./kita3_scraping_logs/{kita3}/page{i}.log",
+            )
+
             random_duration = random.randint(3, 10)
             # Wait for the random duration
             time.sleep(random_duration)
@@ -95,10 +100,10 @@ def scrape_kita3_law_data(kita3):
             # Wait for the random duration
             time.sleep(random_duration)
 
+            wait = WebDriverWait(driver, 10)  # Timeout after 10 seconds
+            frame = wait.until(EC.presence_of_element_located((By.XPATH, '//frame[@src="ATitre.htm"]')))
             # Switch to the frame with src="ATitre.htm"
-            driver.switch_to.frame(
-                driver.find_element(By.XPATH, '//frame[@src="ATitre.htm"]')
-            )
+            driver.switch_to.frame(frame)
 
             # Wait for an element on the page to indicate that it's fully loaded
             WebDriverWait(driver, 60).until(
@@ -144,12 +149,44 @@ def scrape_kita3_law_data(kita3):
                 )
             )
             search_button.click()
-
-            display_settings_link = WebDriverWait(driver, 60).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div/table[1]/tbody/tr/td[1]/a")
+            
+            def page_ready(driver):
+                no_found_elements = driver.find_elements(
+                    By.XPATH, '//*[@id="tit"]'
                 )
+                # No laws found
+                if (len(no_found_elements)>0):
+                    return True                
+                display_settings_link = driver.find_elements(
+                    By.XPATH, '/html/body/div/table[1]/tbody/tr/td[1]/a'
+                )                
+                if (len(display_settings_link)>0):
+                    return True
+                return False
+
+            WebDriverWait(driver, 180, 2).until(page_ready)
+            log_line = f"Page {i} ready"
+            page_logger.info(log_line)
+            main_logger.info(log_line)
+            print(log_line)
+            
+            no_found_elements = driver.find_elements(
+                By.XPATH, '//*[@id="tit"]'
             )
+            # No laws found
+            if (len(no_found_elements)>0):
+                log_line = f"Page {i} of {kita3}: No laws found!"
+                page_logger.info(log_line)
+                main_logger.info(log_line)
+                print(log_line)
+                break
+            
+            display_settings_link_elements = driver.find_elements(
+                By.XPATH, '/html/body/div/table[1]/tbody/tr/td[1]/a'
+            )                
+
+            display_settings_link = display_settings_link_elements[0]
+
             display_settings_link.click()
 
             pages_input = WebDriverWait(driver, 60).until(
@@ -190,10 +227,6 @@ def scrape_kita3_law_data(kita3):
                     By.XPATH, '//tr[@bgcolor="#78a7b9"]'
                 )
                 # Iterate through the matching rows
-                page_logger = setup_logger(
-                    f"page_{i}_{kita3}",
-                    f"./kita3_scraping_logs/{kita3}/page{i}.log",
-                )
                 page_logger.info(f"Starting kita3 scrape for {kita3}, page {i}")
                 row_number = 0
                 for row in matching_rows:
@@ -325,8 +358,10 @@ if __name__ == "__main__":
     # Open the website
     driver.get("https://www.joradp.dz/HAR/Index.htm")
 
+    wait = WebDriverWait(driver, 10)  # Timeout after 10 seconds
+    frame = wait.until(EC.presence_of_element_located((By.XPATH, '//frame[@src="ATitre.htm"]')))
     # Switch to the frame with src="ATitre.htm"
-    driver.switch_to.frame(driver.find_element(By.XPATH, '//frame[@src="ATitre.htm"]'))
+    driver.switch_to.frame(frame)
 
     # Wait for an element on the page to indicate that it's fully loaded
     WebDriverWait(driver, 60).until(
