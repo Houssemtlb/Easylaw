@@ -334,7 +334,7 @@ def storeLawkita3(kita3, allLawsIds, page_logger):
                 # Update existing record
                 existing_law_text.field = kita3
             else:
-                log_line = f"Law not found: {e}"
+                log_line = f"Law not found in db: LawId: {law_id}"
                 page_logger.error(log_line)
         session.commit()
         log_line = f" ----------------- \n kita3 for laws stored in db successfully and committed...\n"
