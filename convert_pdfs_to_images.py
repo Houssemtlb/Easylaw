@@ -56,4 +56,4 @@ def convert_pdfs_to_images(base_dir):
         pool.map(convert_pdf_to_images, pdf_files)
 
 # Adjust the path as necessary
-convert_pdfs_to_images("joradp_pdfs_houssem_2")
+convert_pdfs_to_images("joradp_pdfs")
