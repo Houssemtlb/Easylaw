@@ -13,12 +13,17 @@ def image_to_text(base_dir, lang='eng'):
                 try:
                     text = pytesseract.image_to_string(Image.open(img_path), lang=lang)
                     
-                    # Construct text file path
-                    txt_file_path = f"{img_path.rsplit('.', 1)[0]}.txt"
+                    # Extract sequence number from image file name
+                    sequence_number = int(file.split("-")[-1].split(".")[0])
+                    
+                    # Construct text file path based on sequence number
+                    txt_file_path = os.path.join(root, f"{sequence_number}.txt")
                     
                     # Save the extracted text to a .txt file
                     with open(txt_file_path, 'w', encoding='utf-8') as f:
                         f.write(text)
+
+                    print(f"processed {root}, {file} succesfuly")
                 except Exception as e:
                     print(f"Error processing {img_path}: {e}")
 
