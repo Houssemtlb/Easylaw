@@ -324,10 +324,10 @@ def scrape_kita3_law_data(kita3):
 
 
 def storeLawkita3(kita3, allLawsIds, page_logger):
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    try:
-        for law_id in allLawsIds:
+    for law_id in allLawsIds:
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        try:
             # Check if the law text already exists
             existing_law_text = session.query(LawText).get(law_id)
             if existing_law_text:
@@ -336,16 +336,15 @@ def storeLawkita3(kita3, allLawsIds, page_logger):
             else:
                 log_line = f"Law not found in db: LawId: {law_id}"
                 page_logger.error(log_line)
-        session.commit()
-        log_line = f" ----------------- \n kita3 for laws stored in db successfully and committed...\n"
-        page_logger.info(log_line)
-    except Exception as e:
-        session.rollback()
-        log_line = f"Error inserting kita3 for a law: {e}"
-        page_logger.error(log_line)
-    finally:
-        session.close()
-
+            session.commit()
+            log_line = f" ----------------- \n kita3 for laws stored in db successfully and committed...\n"
+            page_logger.info(log_line)
+        except Exception as e:
+            session.rollback()
+            log_line = f"Error inserting kita3 for a law: {e}"
+            page_logger.error(log_line)
+        finally:
+            session.close()
 
 if __name__ == "__main__":
 
