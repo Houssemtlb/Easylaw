@@ -18,6 +18,8 @@ from sqlalchemy.dialects.postgresql import ARRAY
 import logging
 import random
 
+import itertools
+
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
@@ -39,10 +41,11 @@ def setup_logger(name, log_file, level=logging.INFO):
 
     return logger
 
+
 main_logger = setup_logger(
-                    f"main_program_logs",
-                    f"./pages_scraping_logs/main_program_logs.log",
-                )
+    f"main_program_logs",
+    f"./pages_scraping_logs/main_program_logs.log",
+)
 
 Base = declarative_base()
 
@@ -59,8 +62,9 @@ class LawText(Base):
     ministry = Column(String)
     content = Column(String)
     field = Column(String, default="")
-    long_content = Column(Text,default="")
+    long_content = Column(Text, default="")
     page_fixed = Column(Boolean, default=False)
+
 
 class Association(Base):
     __tablename__ = "laws_associations"
@@ -86,7 +90,8 @@ arabic_months = {
     "ديسمبر": "12",
 }
 
-def scrape_law_data(law_type):
+
+def scrape_law_data(law_type, start_date):
     number_of_pages = 0
     i = 0
     j = 0
@@ -100,6 +105,11 @@ def scrape_law_data(law_type):
         print(log_line)
 
         try:
+            page_logger = setup_logger(
+                f"page_{i}_{law_type}",
+                f"./pages_scraping_logs/{law_type}/page{i}.log",
+            )
+
             random_duration = random.randint(3, 10)
             # Wait for the random duration
             time.sleep(random_duration)
@@ -156,7 +166,7 @@ def scrape_law_data(law_type):
                 EC.presence_of_element_located((By.NAME, "znjd"))
             )
             date_input.clear()
-            date_input.send_keys("01/01/1964")
+            date_input.send_keys(start_date)
 
             # Click on the "بــحـــث" button
             search_button = WebDriverWait(driver, 60).until(
@@ -166,11 +176,39 @@ def scrape_law_data(law_type):
             )
             search_button.click()
 
-            display_settings_link = WebDriverWait(driver, 60).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div/table[1]/tbody/tr/td[1]/a")
+            def page_ready(driver):
+                no_found_elements = driver.find_elements(By.XPATH, '//*[@id="tit"]')
+                # No laws found
+                if len(no_found_elements) > 0:
+                    return True
+                display_settings_link = driver.find_elements(
+                    By.XPATH, "/html/body/div/table[1]/tbody/tr/td[1]/a"
                 )
+                if len(display_settings_link) > 0:
+                    return True
+                return False
+
+            WebDriverWait(driver, 180, 2).until(page_ready)
+            log_line = f"Page {i} of {law_type} ready"
+            page_logger.info(log_line)
+            main_logger.info(log_line)
+            print(log_line)
+
+            no_found_elements = driver.find_elements(By.XPATH, '//*[@id="tit"]')
+            # No laws found
+            if len(no_found_elements) > 0:
+                log_line = f"Page {i} of {law_type}: No laws found!"
+                page_logger.info(log_line)
+                main_logger.info(log_line)
+                print(log_line)
+                break
+
+            display_settings_link_elements = driver.find_elements(
+                By.XPATH, "/html/body/div/table[1]/tbody/tr/td[1]/a"
             )
+
+            display_settings_link = display_settings_link_elements[0]
+
             display_settings_link.click()
 
             pages_input = WebDriverWait(driver, 60).until(
@@ -209,10 +247,6 @@ def scrape_law_data(law_type):
                     By.XPATH, '//tr[@bgcolor="#78a7b9"]'
                 )
                 # Iterate through the matching rows
-                page_logger = setup_logger(
-                    f"page_{i}_{law_type}",
-                    f"./pages_scraping_logs/{law_type}/page{i}.log",
-                )
                 page_logger.info(f"Starting scrape for {law_type}, page {i}")
                 row_number = 0
                 for row in matching_rows:
@@ -255,10 +289,8 @@ def scrape_law_data(law_type):
 
                     next_siblings = []
                     assocObject = {"assoc": "", "idOut": object["id"], "idsIn": []}
-                    
-                    log_line = (
-                        f" ----------------- \n Getting siblings...\n"
-                    )
+
+                    log_line = f" ----------------- \n Getting siblings...\n"
                     page_logger.info(log_line)
                     script = """
                     var currentElement = arguments[0];
@@ -276,16 +308,12 @@ def scrape_law_data(law_type):
 
                     # Execute the script and get the list of siblings until a specific bgcolor or the end
                     siblings = driver.execute_script(script, row)
-                    log_line = (
-                        f" ----------------- \n Got siblings...\n"
-                    )
+                    log_line = f" ----------------- \n Got siblings...\n"
                     page_logger.info(log_line)
 
-                    log_line = (
-                        f" ----------------- \n Processing siblings...\n"
-                    )
+                    log_line = f" ----------------- \n Processing siblings...\n"
                     page_logger.info(log_line)
-                    
+
                     assocObject = {"assoc": "", "idOut": object["id"], "idsIn": []}
                     # Now 'siblings' will be a list of WebElement objects that you can loop through in Python
                     for following_sibling in siblings:
@@ -308,21 +336,27 @@ def scrape_law_data(law_type):
                         script_result = driver.execute_script(script, following_sibling)
 
                         # Process the result
-                        td_elements = script_result['tdElements']
+                        td_elements = script_result["tdElements"]
 
-                        if td_elements[0]['colspan'] == "6":
+                        if td_elements[0]["colspan"] == "6":
                             next_siblings.append(following_sibling)
-                            log_line = f"Added to next_siblings: {following_sibling.text}\n"
+                            log_line = (
+                                f"Added to next_siblings: {following_sibling.text}\n"
+                            )
                             page_logger.info(log_line)
 
-                        elif td_elements[1]['colspan'] == "5":
+                        elif td_elements[1]["colspan"] == "5":
                             if assocObject["assoc"] != "":
                                 allAssoc.append(assocObject.copy())
-                            assocObject["assoc"] = td_elements[1]['text']
+                            assocObject["assoc"] = td_elements[1]["text"]
                             log_line = f"Association: {assocObject['assoc']}\n"
                             page_logger.info(log_line)
-                        elif td_elements[0]['colspan'] == "2" and len(td_elements) == 3 and td_elements[2]['bgcolor'] == "#9ec7d7":
-                            id_element_href = td_elements[1]['href']
+                        elif (
+                            td_elements[0]["colspan"] == "2"
+                            and len(td_elements) == 3
+                            and td_elements[2]["bgcolor"] == "#9ec7d7"
+                        ):
+                            id_element_href = td_elements[1]["href"]
                             log_line = f"Association Law ID href: {id_element_href}\n"
                             page_logger.info(log_line)
                             match = re.search(r"#(\d+)", id_element_href)
@@ -332,14 +366,10 @@ def scrape_law_data(law_type):
                     if assocObject["assoc"] != "":
                         allAssoc.append(assocObject.copy())
 
-                    log_line = (
-                        f" ----------------- \n Processed siblings...\n"
-                    )
+                    log_line = f" ----------------- \n Processed siblings...\n"
                     page_logger.info(log_line)
 
-                    log_line = (
-                        f" ----------------- \n Processing the law...\n"
-                    )
+                    log_line = f" ----------------- \n Processing the law...\n"
                     page_logger.info(log_line)
 
                     if len(next_siblings) == 4:
@@ -378,7 +408,7 @@ def scrape_law_data(law_type):
                             )
                         else:
                             object["signatureDate"] = dt.fromisoformat("9999-12-31")
-                            
+
                         object["ministry"] = next_siblings[1].text
 
                         date = next_siblings[2].text
@@ -440,7 +470,7 @@ def scrape_law_data(law_type):
                             )
                         else:
                             object["signatureDate"] = dt.fromisoformat("9999-12-31")
-                        
+
                         date = next_siblings[1].text
                         # Define the regular expression pattern
                         pattern = r"في (\d+ [^\s]+ \d+)"
@@ -466,10 +496,8 @@ def scrape_law_data(law_type):
                     else:
                         log_line = f" \n \n \n ERROR\n"
                         page_logger.error(log_line)
-                    
-                    log_line = (
-                        f" ----------------- \n Processed the law...\n"
-                    )
+
+                    log_line = f" ----------------- \n Processed the law...\n"
                     page_logger.info(log_line)
 
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n lawTexts {lawTexts}\n"
@@ -481,31 +509,22 @@ def scrape_law_data(law_type):
                 page_logger.info(log_line)
                 log_line = f" \n \n \n ~~~~~~~~~~~~~~~~ \n length of allAssoc {len(allAssoc)}\n"
                 page_logger.info(log_line)
-                
-                log_line = (
-                    f" ----------------- \n Storing the laws in db...\n"
-                )
+
+                log_line = f" ----------------- \n Storing the laws in db...\n"
                 page_logger.info(log_line)
 
                 storeLawText(lawTexts, page_logger)
-                
-                log_line = (
-                    f" ----------------- \n Stored the laws in db...\n"
-                )
+
+                log_line = f" ----------------- \n Stored the laws in db...\n"
                 page_logger.info(log_line)
 
-                log_line = (
-                    f" ----------------- \n Storing the assoc in db...\n"
-                )
+                log_line = f" ----------------- \n Storing the assoc in db...\n"
                 page_logger.info(log_line)
 
                 storeLawAssociations(allAssoc, page_logger)
 
-                log_line = (
-                    f" ----------------- \n Stored the assoc in db...\n"
-                )
+                log_line = f" ----------------- \n Stored the assoc in db...\n"
                 page_logger.info(log_line)
-
 
                 log_line = f" \n Finished scraping page {i} of {law_type} with {len(lawTexts)} law and {len(allAssoc)} assoc \n"
                 page_logger.info(log_line)
@@ -604,15 +623,11 @@ def storeLawText(lawTexts, page_logger):
                 )
                 session.add(new_law_text)
         session.commit()
-        log_line = (
-            f" ----------------- \n lawTexts stored in db successfully and committed...\n"
-        )
+        log_line = f" ----------------- \n lawTexts stored in db successfully and committed...\n"
         page_logger.info(log_line)
     except Exception as e:
         session.rollback()
-        log_line = (
-            f"Error inserting/updating law text: {e}"
-        )
+        log_line = f"Error inserting/updating law text: {e}"
         page_logger.error(log_line)
     finally:
         session.close()
@@ -642,16 +657,12 @@ def storeLawAssociations(associations, page_logger):
 
         # Commit the session once all associations have been processed
         session.commit()
-        log_line = (
-            f" ----------------- \n associations stored in db successfully and committed...\n"
-        )
+        log_line = f" ----------------- \n associations stored in db successfully and committed...\n"
         page_logger.info(log_line)
     except Exception as e:
         # If any exception occurs, rollback the session to avoid partial commits
         session.rollback()
-        log_line = (
-            f"Error in storing/updating associations: {e}"
-        )
+        log_line = f"Error in storing/updating associations: {e}"
         page_logger.error(log_line)
     finally:
         # Ensure the session is closed properly in a finally block
@@ -660,14 +671,16 @@ def storeLawAssociations(associations, page_logger):
 
 if __name__ == "__main__":
 
+    start_date = input("Enter the start date (format: DD/MM/YYYY): ")
+
     # Create database tables
-    #DONT FORGET TO CHECK IF THE TABLE EXISTS OR NOT BEFORE CREATING IT
+    # DONT FORGET TO CHECK IF THE TABLE EXISTS OR NOT BEFORE CREATING IT
     Base.metadata.create_all(engine)
 
     # Initialize ChromeOptions
     options = Options()
     options.add_argument("--disable-gpu")
-    options.add_argument("--headless=new")
+    # options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
     # Open the website
@@ -715,5 +728,7 @@ if __name__ == "__main__":
 
     law_types_iterator = iter(law_types)
     with multiprocessing.Pool(processes=3) as pool:
-        for result in pool.imap(scrape_law_data, law_types_iterator):
+        for result in pool.starmap(
+            scrape_law_data, zip(law_types_iterator, itertools.repeat(start_date))
+        ):
             pass
