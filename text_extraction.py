@@ -82,8 +82,8 @@ keywords = ['أمر', 'منشور', 'منشور وزاري مشترك',
 
 
 def iterate_law_texts():
-    try:
-        for news_paper in session.query(Newspaper).all():
+    for news_paper in session.query(Newspaper).all():
+        try:
 
             # Construct the text of the rest of the journal starting from the related page
             directory = f'joradp_pdfs\{news_paper.year}\{news_paper.year}_{news_paper.number}'
@@ -91,13 +91,16 @@ def iterate_law_texts():
                 file.endswith('.txt') and int(file.split('.')[0]) >= 1)]
             txt_files = sorted(txt_files, key=lambda x: int(x.split('.')[0]))
 
+            
             # concatenate all th text of txt_files in the directory
             lawsStartingPage = []
             for law in session.query(LawText).filter(
                 and_(
-                    LawText.journal_date >= dt(news_paper.year, 1, 1),
-                    LawText.journal_date <= dt(news_paper.year, 12, 31),
-                    LawText.journal_num == news_paper.number,
+                    LawText.journal_date >= dt(int(news_paper.year), 1, 1),
+                    LawText.journal_date <= dt(int(news_paper.year), 12, 31),
+                    LawText.journal_num == int(news_paper.number),
+                    LawText.page_fixed == True,
+                    LawText.journal_page <= int(txt_files[-1].split('.')[0])
                 )
             ).all():
 
@@ -106,8 +109,8 @@ def iterate_law_texts():
                 lawsStartingPage = sorted(
                     lawsStartingPage, key=lambda x: x['pages'])
             lawsPagesRanges = transform_to_page_ranges(lawsStartingPage)
+            main_logger.info(f"lawsPagesRanges : {lawsPagesRanges}")
 
-            
             
             for object in lawsPagesRanges:
                 law = session.query(LawText).filter(
@@ -119,9 +122,10 @@ def iterate_law_texts():
                     law_title = f"{law.text_type}"
 
                 long_text = ''
+  
                 for page in object['pages']:
-                    # if last element in the list
-                    if page != object['pages'][-1]:
+                    # if not last element in the list
+                    if(object != lawsPagesRanges[-1]):
                         with open(f'{directory}/{page}.txt', 'r', encoding='utf-8') as f:
                             long_text += f.read()
                     else:
@@ -134,15 +138,16 @@ def iterate_law_texts():
                 trimed_long_text = trim_before_desired_name(
                     long_text, law_title, text_number)
 
-                main_logger.info(f"title : {law_title}")
-                main_logger.info(f"text : {trimed_long_text}")
+                #main_logger.info(f"title : {law_title}")
+                #main_logger.info(f"object : {object}")
+                #main_logger.info(f"text : {trimed_long_text}")
 
                 #insert the long text in the database
                 law.long_content = trimed_long_text
                 session.commit()
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 
 def transform_to_page_ranges(data):
@@ -196,52 +201,6 @@ def trim_before_desired_name(long_text, desired_name, text_number):
         return long_text
 
 
-def find_lines_with_laws(long_text, year, number):
-    lines = long_text.split('\n')
-    found_line_indexes = []
-    prepared_law_texts = []
-
-    law_texts = session.query(LawText).filter(
-        and_(
-            LawText.journal_date >= dt(int(year), 1, 1),
-            LawText.journal_date <= dt(int(year), 12, 31),
-            LawText.journal_num == int(number)
-        )
-    ).all()
-
-    for law_text in law_texts:
-        text_number = law_text.text_number
-        if text_number != None:
-            law_title = f"{law_text.text_type} رقم {law_text.text_number}"
-        else:
-            law_title = f"{law_text.text_type}"
-        prepared_law_texts.append(
-            {'law_title': law_title, 'text_number': law_text.text_number})
-
-    main_logger.info(f"prepared_law_texts : {prepared_law_texts}")
-
-    for i, line in enumerate(lines):
-        words = line.split()
-
-        for law in prepared_law_texts:
-            num_words_to_compare = len(law["law_title"].split())
-            if len(words) >= num_words_to_compare:
-                initial_words = ' '.join(words[:num_words_to_compare])
-
-                if fuzz.partial_ratio(law["law_title"], initial_words) >= 90:
-                    if law["text_number"] != None:
-                        numbers = law["text_number"]
-                        try:
-                            if numbers[1] in line:
-                                found_line_indexes.append(
-                                    {'index': i, 'law_title': law["law_title"]})
-                                break
-                        except:
-                            found_line_indexes.append(
-                                {'index': i, 'law_title': law["law_title"]})
-                            break
-
-    return found_line_indexes
 
 
 
