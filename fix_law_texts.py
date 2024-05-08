@@ -23,13 +23,7 @@ def setup_logger(name, log_file, level=logging.INFO):
 
     return logger
 
-
-
-
-
-
 Base = declarative_base()
-
 
 class LawText(Base):
     __tablename__ = "laws"
@@ -62,17 +56,15 @@ def fix_law_texts():
     for law in laws:
         if law.long_content:
             original_long_content = law.long_content
-            # Remove leading line break if present
-            if law.long_content.startswith('\n'):
-                law.long_content = law.long_content.lstrip('\n')
-                main_logger.info(f"Leading line break removed from long_content of LawText with id {law.id}.")
-            if law.long_content.endswith('\n'):
-                law.long_content = law.long_content.rstrip('\n')
-                main_logger.info(f"Trailing line break removed from long_content of LawText with id {law.id}.")
-            # Replace multiple line breaks with single line break
+            # Replace multiple line breaks with a single line break
             law.long_content = law.long_content.replace("\n\n", "\n")
+            # Remove leading and trailing whitespace, and remove lines containing only whitespace
+            lines = law.long_content.strip().split('\n')
+            lines = [line for line in lines if line.strip()]  # Filter out lines with only whitespace
+            # Join the non-empty lines back together
+            law.long_content = '\n'.join(lines)
             if original_long_content != law.long_content:
-                main_logger.info(f"Multiple line breaks replaced with single line break in long_content of LawText with id {law.id}.")
+                main_logger.info(f"Multiple line breaks replaced with single line break and lines containing only whitespace removed from long_content of LawText with id {law.id}.")
     session.commit()
     session.close()
 fix_law_texts()
