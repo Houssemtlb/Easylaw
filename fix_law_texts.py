@@ -61,6 +61,8 @@ def fix_law_texts():
             # Remove leading and trailing whitespace, and remove lines containing only whitespace
             lines = law.long_content.strip().split('\n')
             lines = [line for line in lines if line.strip()]  # Filter out lines with only whitespace
+            # Remove lines containing numbers only
+            lines = [line for line in lines if not line.strip().isdigit()]
             # Join the non-empty lines back together
             law.long_content = '\n'.join(lines)
             if original_long_content != law.long_content:
