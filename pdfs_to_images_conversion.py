@@ -44,11 +44,16 @@ def convert_pdf_to_images(pdf_path):
     except Exception as e:
         logging.error(f"Error converting {pdf_path}: {e}")
 
-def convert_pdfs_to_images(base_dir):
+def convert_pdfs_to_images(base_dir, target_year, target_journal_number):
     global total_files
     # Walk the directory to list all PDF files
     # Construct PDF file path and append it to the list
-    pdf_files = [os.path.join(root, file) for root, _, files in os.walk(base_dir) for file in files if file.endswith(".pdf")]
+    pdf_files = [
+        os.path.join(root, file)
+        for root, _, files in os.walk(base_dir)
+        for file in files 
+        if (file.endswith(".pdf") and (int(file.split("_")[0]) > target_year or (int(file.split("_")[0]) == target_year and int(file.split("_")[1].split(".")[0]) > target_journal_number)))
+    ]
     total_files = len(pdf_files)  # Set the total number of files to be processed
 
     # Adjust the number of precesses as necessary
@@ -56,4 +61,4 @@ def convert_pdfs_to_images(base_dir):
         pool.map(convert_pdf_to_images, pdf_files)
 
 # Adjust the path as necessary
-convert_pdfs_to_images("joradp_pdfs")
+convert_pdfs_to_images("joradp_pdfs", 1962, 1)
