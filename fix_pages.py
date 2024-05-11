@@ -1,11 +1,13 @@
 import scrapy
 from scrapy import signals
 from datetime import date as dt
+from datetime import datetime
 from sqlalchemy import and_, create_engine, Column, Integer, String, Date, Boolean, Text
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
 import logging
+
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
@@ -26,10 +28,6 @@ def setup_logger(name, log_file, level=logging.INFO):
     logger.propagate = False
 
     return logger
-
-
-
-
 
 
 Base = declarative_base()
@@ -76,15 +74,20 @@ class JoradpSpider(scrapy.Spider):
         return spider
 
     def parse(self, response):
+
+        start_date_str = input("Enter the last scraping year : ")
+        start_date = int(start_date_str)
+
         Base.metadata.create_all(engine)
-        # Step 2: Extract href attribute from the specified element
+
         href = "https://www.joradp.dz/JRN/ZA2024.htm"
         if href:
 
-            # Step 3: Extract year from the href attribute
             self.currentYear = int(href.split('ZA')[1].split('.')[0])
-            # Step 4: Make requests for each year from 2024 to 1964
-            for year in range(self.currentYear, 1963, -1):
+
+            # CHANGE HERE FOR DATE
+            for year in range(self.currentYear, start_date - 1, -1):
+                self.main_logger.info(f"Processing year {year}")
                 url = f'https://www.joradp.dz/JRN/ZA{year}.htm'
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
@@ -134,7 +137,7 @@ class JoradpSpider(scrapy.Spider):
                     base_url = f"https://www.joradp.dz/{Lien}/{year}/{processed_number}/A_Pag1.htm"
 
                     yield scrapy.Request(base_url, callback=self.parse_law_text, meta={'year': year, 'number': processed_number})
-            else: 
+            else:
                 for number in numbers:
                     start_date = dt(int(year), 1, 1)
                     end_date = dt(int(year), 12, 31)
@@ -150,8 +153,8 @@ class JoradpSpider(scrapy.Spider):
                         for row in rowsToCorrect:
                             row.page_fixed = True
                         session.commit()
-                    self.main_logger.info(f"Fixed journal number {number} for the year {year}")
-                    
+                    self.main_logger.info(
+                        f"Fixed journal number {number} for the year {year}")
 
     def parse_law_text(self, response):
         soup = BeautifulSoup(response.body, 'html.parser')
@@ -183,7 +186,8 @@ class JoradpSpider(scrapy.Spider):
                     session.commit()
                 correctPage += 1
 
-            self.main_logger.info(f"Fixed journal number {response.meta['number']} for the year {response.meta['year']}")
+            self.main_logger.info(
+                f"Fixed journal number {response.meta['number']} for the year {response.meta['year']}")
         else:
             start_date = dt(int(response.meta['year']), 1, 1)
             end_date = dt(int(response.meta['year']), 12, 31)
@@ -199,7 +203,8 @@ class JoradpSpider(scrapy.Spider):
                 for row in rowsToCorrect:
                     row.page_fixed = True
                 session.commit()
-            self.main_logger.info(f"Fixed journal number {response.meta['number']} for the year {response.meta['year']}")
+            self.main_logger.info(
+                f"Fixed journal number {response.meta['number']} for the year {response.meta['year']}")
 
     def spider_closed(self, spider):
         pass

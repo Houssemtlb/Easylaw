@@ -93,10 +93,14 @@ class JoradpSpider(scrapy.Spider):
         href = "https://www.joradp.dz/JRN/ZA2024.htm"
         if href:
 
-            # Step 3: Extract year from the href attribute
             currentYear = int(href.split("ZA")[1].split(".")[0])
-            # Step 4: Make requests for each year from 2024 to 1964
-            for year in range(currentYear, 1963, -1):
+           
+            start_date_str = input("Enter the last scraping year : ")
+            start_date = int(start_date_str)
+
+            for year in range(currentYear, start_date - 1 , -1):
+                main_logger.info(f"Processing year {year}")
+
                 url = f"https://www.joradp.dz/JRN/ZA{year}.htm"
                 headers = {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
