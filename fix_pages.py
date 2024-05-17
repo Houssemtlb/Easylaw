@@ -48,7 +48,7 @@ class LawText(Base):
     long_content = Column(Text, default="")
     page_fixed = Column(Boolean, default=False)
 
-
+ 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
 
 Session = sessionmaker(bind=engine)

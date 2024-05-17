@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import and_, create_engine, Column, Integer, String, Date, Boolean, Text
+from sqlalchemy import and_, create_engine, Column, Integer, String, Date, Boolean, Text,cast
 from sqlalchemy.orm import sessionmaker
 import os
 from datetime import date as dt
@@ -33,9 +33,21 @@ main_logger = setup_logger(
     f".\pdf_text_extraction_logs.log",
 )
 
-
 Base = declarative_base()
 
+class LastScrapingDate(Base):
+    __tablename__ = "last_scraping_date"
+    id = Column(Integer, primary_key=True)
+    newspapers_scraper = Column(Date)
+    laws_metadata_scraper = Column(Date)
+    kita3 = Column(Date)
+    fix_pages = Column(Date)
+    ocr_images = Column(Date)
+    pdfs_to_images_conversion = Column(Date)
+    text_extraction = Column(Date)
+    fix_law_texts = Column(Date)
+
+    
 
 class LawText(Base):
     __tablename__ = "laws"
@@ -82,11 +94,23 @@ keywords = ['أمر', 'منشور', 'منشور وزاري مشترك',
 
 
 def iterate_law_texts():
-    for news_paper in session.query(Newspaper).all():
+    start_date = session.query(LastScrapingDate).first().newspapers_scraper.year
+
+    #for newspapers out after the start date
+    for news_paper in session.query(Newspaper).filter(
+            and_(
+                cast(Newspaper.year, Integer) >= start_date
+            )   
+        ).all():
         try:
 
             # Construct the text of the rest of the journal starting from the related page
             directory = f'joradp_pdfs\{news_paper.year}\{news_paper.year}_{news_paper.number}'
+
+            #if you dont find the directory, skip the iteration
+            if not os.path.exists(directory):
+                continue
+
             txt_files = [file for file in os.listdir(directory) if (
                 file.endswith('.txt') and int(file.split('.')[0]) >= 1)]
             txt_files = sorted(txt_files, key=lambda x: int(x.split('.')[0]))
@@ -103,7 +127,7 @@ def iterate_law_texts():
                     LawText.journal_page <= int(txt_files[-1].split('.')[0])
                 )
             ).all():
-
+ 
                 lawsStartingPage.append(
                     {'id': law.id, 'pages': law.journal_page})
                 lawsStartingPage = sorted(
@@ -146,6 +170,11 @@ def iterate_law_texts():
                 law.long_content = trimed_long_text
                 session.commit()
 
+
+            last_scraping_date = session.query(LastScrapingDate).first()
+            last_scraping_date.text_extraction = dt.today()
+            session.commit()
+            
         except Exception as e:
             print(f"An error occurred: {e}")
 
@@ -199,9 +228,6 @@ def trim_before_desired_name(long_text, desired_name, text_number):
         return '\n'.join(lines)
     else:
         return long_text
-
-
-
 
 
 

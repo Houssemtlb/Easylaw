@@ -3,10 +3,11 @@ from scrapy import signals
 import requests
 from tqdm import tqdm
 import os
-from sqlalchemy import create_engine, Column, String
+from sqlalchemy import create_engine, Column, String,Integer, Date
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 import logging
+from datetime import date
 
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -37,6 +38,18 @@ main_logger = setup_logger(
 
 Base = declarative_base()
 
+class LastScrapingDate(Base):
+    __tablename__ = "last_scraping_date"
+    id = Column(Integer, primary_key=True)
+    newspapers_scraper = Column(Date)
+    laws_metadata_scraper = Column(Date)
+    kita3 = Column(Date)
+    fix_pages = Column(Date)
+    ocr_images = Column(Date)
+    pdfs_to_images_conversion = Column(Date)
+    text_extraction = Column(Date)
+    fix_law_texts = Column(Date)
+
 
 class Newspaper(Base):
     __tablename__ = "official_newspaper"
@@ -46,11 +59,10 @@ class Newspaper(Base):
 
 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
-
+Session = sessionmaker(bind=engine)
+session = Session()
 
 def storeOfficialNewspaper(newsPaper):
-    Session = sessionmaker(bind=engine)
-    session = Session()
     try:
         # Check if the law text already exists
         existing_news_paper = session.query(Newspaper).get(newsPaper["id"])
@@ -95,8 +107,7 @@ class JoradpSpider(scrapy.Spider):
 
             currentYear = int(href.split("ZA")[1].split(".")[0])
            
-            start_date_str = input("Enter the last scraping year : ")
-            start_date = int(start_date_str)
+            start_date = session.query(LastScrapingDate).first().newspapers_scraper.year
 
             for year in range(currentYear, start_date - 1 , -1):
                 main_logger.info(f"Processing year {year}")
@@ -135,6 +146,10 @@ class JoradpSpider(scrapy.Spider):
         with open("pdf_numbers.txt", "w") as f:
             f.write(f"{self.data}\n")
 
+        last_scraping_date = session.query(LastScrapingDate).first()
+        last_scraping_date.newspapers_scraper = date.today()
+        session.commit()
+
         for year, numbers in self.data.items():
             max = numbers[0]
             for number in tqdm(numbers, desc=f"Downloading PDFs for {year}"):
@@ -146,7 +161,7 @@ class JoradpSpider(scrapy.Spider):
                 else:
                     pdf_url = f"{base_url}{year}/A{year}0{number}.pdf"
 
-                response = requests.get(pdf_url, stream=True)
+                response = requests.get(pdf_url, stream=True,verify=False)
 
                 if response.status_code == 200:
                     local_directory = f"joradp_pdfs/{year}"
