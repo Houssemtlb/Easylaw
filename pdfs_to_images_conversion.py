@@ -89,6 +89,11 @@ def convert_pdfs_to_images(base_dir):
     # Adjust the number of precesses as necessary
     with Pool(processes=8) as pool:
         pool.map(convert_pdf_to_images, pdf_files)
+    
+    last_scraping_date = session.query(LastScrapingDate).first()
+    last_scraping_date.pdfs_to_images_conversion_journal_year = dt.today().year
+    last_scraping_date.pdfs_to_images_conversion_journal_number = pdf_files[-1].split("_")[1].split(".")[0]
+    session.commit()
 
 # Adjust the path as necessary
 convert_pdfs_to_images("joradp_pdfs")
