@@ -92,7 +92,7 @@ def convert_pdfs_to_images(base_dir):
     
     last_scraping_date = session.query(LastScrapingDate).first()
     last_scraping_date.pdfs_to_images_conversion_journal_year = dt.today().year
-    last_scraping_date.pdfs_to_images_conversion_journal_number = int(pdf_files[-1].split("_")[1].split(".")[0])
+    last_scraping_date.pdfs_to_images_conversion_journal_number = int(os.path.basename(pdf_files[-1]).split("_")[1].split(".")[0])
     session.commit()
 
 # Adjust the path as necessary
