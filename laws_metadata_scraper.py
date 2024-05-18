@@ -699,7 +699,7 @@ if __name__ == "__main__":
     # Initialize ChromeOptions
     options = Options()
     options.add_argument("--disable-gpu")
-    # options.add_argument("--headless=new")
+    options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
     # Open the website
