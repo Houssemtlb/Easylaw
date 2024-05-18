@@ -18,6 +18,9 @@ from sqlalchemy.dialects.postgresql import ARRAY
 import logging
 import random
 
+import itertools
+
+
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
@@ -50,6 +53,18 @@ main_logger = setup_logger(
 Base = declarative_base()
 
 
+class LastScrapingDate(Base):
+    __tablename__ = "last_scraping_date"
+    id = Column(Integer, primary_key=True)
+    newspapers_scraper = Column(Date)
+    laws_metadata_scraper = Column(Date)
+    kita3 = Column(Date)
+    fix_pages = Column(Date)
+    ocr_images = Column(Date)
+    pdfs_to_images_conversion = Column(Date)
+    text_extraction = Column(Date)
+    fix_law_texts = Column(Date)
+    
 class LawText(Base):
     __tablename__ = "laws"
     id = Column(Integer, primary_key=True, autoincrement=False)
@@ -69,7 +84,7 @@ class LawText(Base):
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
 
 
-def scrape_kita3_law_data(kita3):
+def scrape_kita3_law_data(kita3, start_date):
     number_of_pages = 0
     i = 0
     j = 0
@@ -142,7 +157,7 @@ def scrape_kita3_law_data(kita3):
                 EC.presence_of_element_located((By.NAME, "znjd"))
             )
             date_input.clear()
-            date_input.send_keys("01/01/1964")
+            date_input.send_keys(start_date)
 
             # Click on the "بــحـــث" button
             search_button = WebDriverWait(driver, 60).until(
@@ -350,6 +365,12 @@ if __name__ == "__main__":
 
     # Create database tables
     Base.metadata.create_all(engine)
+    
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    start_date = session.query(LastScrapingDate).first().newspapers_scraper
+
 
     # Initialize ChromeOptions
     options = Options()
@@ -402,5 +423,11 @@ if __name__ == "__main__":
 
     law_types_iterator = iter(kita3_types)
     with multiprocessing.Pool(processes=3) as pool:
-        for result in pool.imap(scrape_kita3_law_data, law_types_iterator):
+        for result in pool.starmap(
+            scrape_kita3_law_data, zip(law_types_iterator, itertools.repeat(start_date))
+        ):
             pass
+        
+    last_scraping_date = session.query(LastScrapingDate).first()
+    last_scraping_date.kita3 = dt.today()
+    session.commit()
