@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ### Pdf docs scraping:
 
 ```
-scrapy runspider joradp_scraper.py
+scrapy runspider newspapers_scraper.py
 ```
 
 ### Laws and Laws associations scraping:
