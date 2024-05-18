@@ -84,16 +84,22 @@ def convert_pdfs_to_images(base_dir):
         for file in files 
         if (file.endswith(".pdf") and (int(file.split("_")[0]) > year or (int(file.split("_")[0]) == year and int(file.split("_")[1].split(".")[0]) > journal_number)))
     ]
+        
+    # Sort the list based on year and journal number
+    pdf_files.sort(key=lambda x: (int(os.path.basename(x).split("_")[0]), int(os.path.basename(x).split("_")[1].split(".")[0])))
+    
     total_files = len(pdf_files)  # Set the total number of files to be processed
 
-    # Adjust the number of precesses as necessary
+    # Adjust the number of processes as necessary
     with Pool(processes=8) as pool:
         pool.map(convert_pdf_to_images, pdf_files)
     
     last_scraping_date = session.query(LastScrapingDate).first()
-    last_scraping_date.pdfs_to_images_conversion_journal_year = dt.today().year
-    last_scraping_date.pdfs_to_images_conversion_journal_number = int(os.path.basename(pdf_files[-1]).split("_")[1].split(".")[0])
+    last_pdf_file = pdf_files[-1]  # Get the last PDF file after sorting
+    last_scraping_date.pdfs_to_images_conversion_journal_year = int(os.path.basename(last_pdf_file).split("_")[0])
+    last_scraping_date.pdfs_to_images_conversion_journal_number = int(os.path.basename(last_pdf_file).split("_")[1].split(".")[0])
     session.commit()
 
-# Adjust the path as necessary
-convert_pdfs_to_images("joradp_pdfs")
+if __name__ == '__main__':
+    # Adjust the path as necessary
+    convert_pdfs_to_images("joradp_pdfs")
