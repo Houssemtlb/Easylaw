@@ -50,6 +50,18 @@ main_logger = setup_logger(
 Base = declarative_base()
 
 
+class LastScrapingDate(Base):
+    __tablename__ = "last_scraping_date"
+    id = Column(Integer, primary_key=True)
+    newspapers_scraper = Column(Date)
+    laws_metadata_scraper = Column(Date)
+    kita3 = Column(Date)
+    fix_pages = Column(Date)
+    ocr_images = Column(Date)
+    pdfs_to_images_conversion = Column(Date)
+    text_extraction = Column(Date)
+    fix_law_texts = Column(Date)
+
 class LawText(Base):
     __tablename__ = "laws"
     id = Column(Integer, primary_key=True, autoincrement=False)
@@ -670,12 +682,16 @@ def storeLawAssociations(associations, page_logger):
 
 
 if __name__ == "__main__":
-
-    start_date = input("Enter the start date (format: DD/MM/YYYY): ")
+    
 
     # Create database tables
     # DONT FORGET TO CHECK IF THE TABLE EXISTS OR NOT BEFORE CREATING IT
     Base.metadata.create_all(engine)
+    
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    start_date = session.query(LastScrapingDate).first().newspapers_scraper
 
     # Initialize ChromeOptions
     options = Options()
@@ -732,3 +748,7 @@ if __name__ == "__main__":
             scrape_law_data, zip(law_types_iterator, itertools.repeat(start_date))
         ):
             pass
+    
+    last_scraping_date = session.query(LastScrapingDate).first()
+    last_scraping_date.newspapers_scraper = dt.today()
+    session.commit()
