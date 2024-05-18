@@ -753,5 +753,5 @@ if __name__ == "__main__":
             pass
     
     last_scraping_date = session.query(LastScrapingDate).first()
-    last_scraping_date.newspapers_scraper = dt.today()
+    last_scraping_date.laws_metadata_scraper = dt.today()
     session.commit()
