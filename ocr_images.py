@@ -3,7 +3,7 @@ from PIL import Image
 import pytesseract
 from concurrent.futures import ThreadPoolExecutor
 
-def process_image(img_path, lang='eng'):
+def process_image(img_path, lang='ara'):
     try:
         # Extract sequence number from image file name
         sequence_number = int(os.path.basename(img_path).split("-")[-1].split(".")[0])
@@ -16,8 +16,6 @@ def process_image(img_path, lang='eng'):
             print(f"Text file already exists for {img_path}")
             return
 
-        
-
         # Perform OCR using pytesseract
         text = pytesseract.image_to_string(Image.open(img_path), lang=lang)
 
@@ -29,7 +27,7 @@ def process_image(img_path, lang='eng'):
     except Exception as e:
         print(f"Error processing {img_path}: {e}")
 
-def image_to_text_parallel(base_dir, lang='eng', max_workers=None):
+def image_to_text_parallel(base_dir, lang='ara', max_workers=None):
     # Use ThreadPoolExecutor to parallelize OCR processing
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Iterate through each image file in the directory
