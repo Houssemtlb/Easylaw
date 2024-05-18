@@ -369,7 +369,7 @@ if __name__ == "__main__":
     Session = sessionmaker(bind=engine)
     session = Session()
     
-    start_date = session.query(LastScrapingDate).first().newspapers_scraper
+    start_date = session.query(LastScrapingDate).first().kita3
 
 
     # Initialize ChromeOptions
