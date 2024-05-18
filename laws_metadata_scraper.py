@@ -23,6 +23,8 @@ import itertools
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
+    
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s : \n %(message)s \n"
@@ -58,10 +60,11 @@ class LastScrapingDate(Base):
     kita3 = Column(Date)
     fix_pages = Column(Date)
     ocr_images = Column(Date)
-    pdfs_to_images_conversion = Column(Date)
+    pdfs_to_images_conversion_journal_year = Column(Integer)
+    pdfs_to_images_conversion_journal_number = Column(Integer)
     text_extraction = Column(Date)
     fix_law_texts = Column(Date)
-
+   
 class LawText(Base):
     __tablename__ = "laws"
     id = Column(Integer, primary_key=True, autoincrement=False)
@@ -178,7 +181,7 @@ def scrape_law_data(law_type, start_date):
                 EC.presence_of_element_located((By.NAME, "znjd"))
             )
             date_input.clear()
-            date_input.send_keys(start_date)
+            date_input.send_keys(start_date.strftime("%d/%m/%Y"))
 
             # Click on the "بــحـــث" button
             search_button = WebDriverWait(driver, 60).until(

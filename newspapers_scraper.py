@@ -46,10 +46,11 @@ class LastScrapingDate(Base):
     kita3 = Column(Date)
     fix_pages = Column(Date)
     ocr_images = Column(Date)
-    pdfs_to_images_conversion = Column(Date)
+    pdfs_to_images_conversion_journal_year = Column(Integer)
+    pdfs_to_images_conversion_journal_number = Column(Integer)
     text_extraction = Column(Date)
     fix_law_texts = Column(Date)
-
+   
 
 class Newspaper(Base):
     __tablename__ = "official_newspaper"

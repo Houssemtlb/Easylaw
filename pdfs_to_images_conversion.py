@@ -2,6 +2,11 @@ from multiprocessing import Pool, Value, Lock, current_process
 import os
 import logging
 from pdf2image import convert_from_path
+from datetime import date as dt
+from sqlalchemy import create_engine, Column, Integer, Date
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import ARRAY
 
 # Configure logging
 logging.basicConfig(
@@ -10,6 +15,24 @@ logging.basicConfig(
     filemode="w",
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
+
+Base = declarative_base()
+
+engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+
+class LastScrapingDate(Base):
+    __tablename__ = "last_scraping_date"
+    id = Column(Integer, primary_key=True)
+    newspapers_scraper = Column(Date)
+    laws_metadata_scraper = Column(Date)
+    kita3 = Column(Date)
+    fix_pages = Column(Date)
+    ocr_images = Column(Date)
+    pdfs_to_images_conversion_journal_year = Column(Integer)
+    pdfs_to_images_conversion_journal_number = Column(Integer)
+    text_extraction = Column(Date)
+    fix_law_texts = Column(Date)
+    
 
 # Define the shared counter and lock globally so that they are inherited
 total_files = None  # This will be set later
@@ -44,7 +67,14 @@ def convert_pdf_to_images(pdf_path):
     except Exception as e:
         logging.error(f"Error converting {pdf_path}: {e}")
 
-def convert_pdfs_to_images(base_dir, target_year, target_journal_number):
+def convert_pdfs_to_images(base_dir):
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    year = session.query(LastScrapingDate).first().pdfs_to_images_conversion_journal_year
+    journal_number = session.query(LastScrapingDate).first().pdfs_to_images_conversion_journal_number
+    
     global total_files
     # Walk the directory to list all PDF files
     # Construct PDF file path and append it to the list
@@ -52,7 +82,7 @@ def convert_pdfs_to_images(base_dir, target_year, target_journal_number):
         os.path.join(root, file)
         for root, _, files in os.walk(base_dir)
         for file in files 
-        if (file.endswith(".pdf") and (int(file.split("_")[0]) > target_year or (int(file.split("_")[0]) == target_year and int(file.split("_")[1].split(".")[0]) > target_journal_number)))
+        if (file.endswith(".pdf") and (int(file.split("_")[0]) > year or (int(file.split("_")[0]) == year and int(file.split("_")[1].split(".")[0]) > journal_number)))
     ]
     total_files = len(pdf_files)  # Set the total number of files to be processed
 
@@ -61,4 +91,4 @@ def convert_pdfs_to_images(base_dir, target_year, target_journal_number):
         pool.map(convert_pdf_to_images, pdf_files)
 
 # Adjust the path as necessary
-convert_pdfs_to_images("joradp_pdfs", 1962, 1)
+convert_pdfs_to_images("joradp_pdfs")
