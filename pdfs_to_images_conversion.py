@@ -74,7 +74,7 @@ def convert_pdfs_to_images(base_dir):
     
     year = session.query(LastScrapingDate).first().pdfs_to_images_conversion_journal_year
     journal_number = session.query(LastScrapingDate).first().pdfs_to_images_conversion_journal_number
-    
+    print(f"last scraping year: {year}, last scraping journal_number: {journal_number}")
     global total_files
     # Walk the directory to list all PDF files
     # Construct PDF file path and append it to the list
@@ -88,6 +88,7 @@ def convert_pdfs_to_images(base_dir):
     # Sort the list based on year and journal number
     pdf_files.sort(key=lambda x: (int(os.path.basename(x).split("_")[0]), int(os.path.basename(x).split("_")[1].split(".")[0])))
     
+    print(f"pdf_files: {pdf_files}")
     total_files = len(pdf_files)  # Set the total number of files to be processed
 
     # Adjust the number of processes as necessary
@@ -95,9 +96,10 @@ def convert_pdfs_to_images(base_dir):
         pool.map(convert_pdf_to_images, pdf_files)
     
     last_scraping_date = session.query(LastScrapingDate).first()
-    last_pdf_file = pdf_files[-1]  # Get the last PDF file after sorting
-    last_scraping_date.pdfs_to_images_conversion_journal_year = int(os.path.basename(last_pdf_file).split("_")[0])
-    last_scraping_date.pdfs_to_images_conversion_journal_number = int(os.path.basename(last_pdf_file).split("_")[1].split(".")[0])
+    if pdf_files:
+        last_pdf_file = pdf_files[-1]  # Get the last PDF file after sorting
+        last_scraping_date.pdfs_to_images_conversion_journal_year = int(os.path.basename(last_pdf_file).split("_")[0])
+        last_scraping_date.pdfs_to_images_conversion_journal_number = int(os.path.basename(last_pdf_file).split("_")[1].split(".")[0])
     session.commit()
 
 if __name__ == '__main__':
