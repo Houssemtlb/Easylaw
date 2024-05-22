@@ -83,6 +83,23 @@ class Newspaper(Base):
     id = Column(String, primary_key=True)
     year = Column(String)
     number = Column(String)
+    link = Column(String)
+
+
+class RecentlyScrapedLaws(Base):
+    __tablename__ = "recently_scraped_laws"
+    id = Column(Integer, primary_key=True, autoincrement=False)
+    text_type = Column(String)
+    text_number = Column(String)
+    journal_date = Column(Date)
+    journal_num = Column(Integer)
+    journal_page = Column(Integer)
+    signature_date = Column(Date)
+    ministry = Column(String)
+    content = Column(String)
+    field = Column(String, default="")
+    long_content = Column(Text, default="")
+    page_fixed = Column(Boolean, default=True)
 
 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
@@ -156,12 +173,10 @@ def iterate_law_texts():
     ):
         try:
 
-            # Construct the text of the rest of the journal starting from the related page
             directory = (
                 f"joradp_pdfs/{news_paper.year}/{news_paper.year}_{news_paper.number}"
             )
 
-            # if you dont find the directory, skip the iteration
             if not os.path.exists(directory):
                 continue
 
@@ -172,7 +187,6 @@ def iterate_law_texts():
             ]
             txt_files = sorted(txt_files, key=lambda x: int(x.split(".")[0]))
 
-            # concatenate all th text of txt_files in the directory
             lawsStartingPage = []
             for law in (
                 session.query(LawText)
@@ -227,8 +241,24 @@ def iterate_law_texts():
                 # main_logger.info(f"object : {object}")
                 # main_logger.info(f"text : {trimed_long_text}")
 
-                # insert the long text in the database
                 law.long_content = trimed_long_text
+                session.commit()
+
+                recently_scraped_law = RecentlyScrapedLaws(
+                    id=law.id,
+                    text_type=law.text_type,
+                    text_number=law.text_number,
+                    journal_date=law.journal_date,
+                    journal_num=law.journal_num,
+                    journal_page=law.journal_page,
+                    signature_date=law.signature_date,
+                    ministry=law.ministry,
+                    content=law.content,
+                    field=law.field,
+                    long_content=law.long_content,
+                    page_fixed=law.page_fixed,
+                )
+                session.add(recently_scraped_law)
                 session.commit()
 
             last_scraping_date = session.query(LastScrapingDate).first()
@@ -260,7 +290,6 @@ def trim_before_desired_name(long_text, desired_name, text_number):
     lines = long_text.split("\n")
     desired_line_index = None
 
-    # Find the line index where the desired name string is present
     for i, line in enumerate(lines):
         words = line.split()
         num_words_to_compare = len(desired_name.split())
@@ -268,7 +297,7 @@ def trim_before_desired_name(long_text, desired_name, text_number):
             initial_words = " ".join(words[:num_words_to_compare])
 
             if fuzz.ratio(desired_name, initial_words) >= 60:
-                # if there is an exact match with text number
+
                 if text_number != None:
                     numbers = text_number.split("-")
                     try:
@@ -282,7 +311,6 @@ def trim_before_desired_name(long_text, desired_name, text_number):
                     desired_line_index = i
                     break
 
-    # Remove lines before the desired line
     if desired_line_index is not None:
         lines = lines[desired_line_index:]
         return "\n".join(lines)

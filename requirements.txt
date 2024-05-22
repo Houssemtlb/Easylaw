@@ -10,3 +10,4 @@ SQLAlchemy==2.0.28
 tqdm==4.66.2
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.25.1
+psycopg2>=2.9.9

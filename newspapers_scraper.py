@@ -59,6 +59,7 @@ class Newspaper(Base):
     id = Column(String, primary_key=True)
     year = Column(String)
     number = Column(String)
+    link = Column(String)
 
 
 engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
@@ -73,12 +74,14 @@ def storeOfficialNewspaper(newsPaper):
             # Update existing record
             existing_news_paper.year = newsPaper["year"]
             existing_news_paper.number = newsPaper["number"]
+            existing_news_paper.link = newsPaper["link"]
         else:
             # Insert new record
             new_news_paper = Newspaper(
                 id=newsPaper["id"],
                 year=newsPaper["year"],
-                number=newsPaper["number"]
+                number=newsPaper["number"],
+                link=newsPaper["link"]
             )
             session.add(new_news_paper)
         session.commit()
@@ -183,8 +186,10 @@ class JoradpSpider(scrapy.Spider):
                     newspaper = {
                         "id": f"{year}{int(number)}",
                         "year": f"{year}",
-                        "number": f"{int(number)}"
+                        "number": f"{int(number)}",
+                        "link": f"{pdf_url}"
                     }
+
                     storeOfficialNewspaper(newsPaper=newspaper)
 
                     main_logger.info(
