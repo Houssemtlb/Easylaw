@@ -319,4 +319,5 @@ def trim_before_desired_name(long_text, desired_name, text_number):
 
 
 if __name__ == "__main__":
+    Base.metadata.create_all(engine)
     iterate_law_texts()
