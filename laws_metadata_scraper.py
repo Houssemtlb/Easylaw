@@ -14,11 +14,13 @@ from sqlalchemy import create_engine, Column, Integer, String, Date, Boolean, Te
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import ARRAY
-
+from dotenv import load_dotenv
 import logging
 import random
-
 import itertools
+
+
+load_dotenv()
 
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -88,7 +90,8 @@ class Association(Base):
     ids_in = Column(ARRAY(Integer))
 
 
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+DB_URL = os.getenv("PG_URL")
+engine = create_engine(DB_URL)
 
 arabic_months = {
     "يناير": "01",

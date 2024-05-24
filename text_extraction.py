@@ -15,6 +15,9 @@ from sqlalchemy.orm import sessionmaker
 import os
 from datetime import date as dt
 from fuzzywuzzy import fuzz
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -102,7 +105,9 @@ class RecentlyScrapedLaws(Base):
     page_fixed = Column(Boolean, default=True)
 
 
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+DB_URL = os.getenv("PG_URL")
+engine = create_engine(DB_URL)
+
 Session = sessionmaker(bind=engine)
 session = Session()
 

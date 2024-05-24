@@ -8,7 +8,9 @@ from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
 import logging
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
@@ -52,7 +54,8 @@ class LawText(Base):
     page_fixed = Column(Boolean, default=False)
 
  
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+DB_URL = os.getenv("PG_URL")
+engine = create_engine(DB_URL)
 
 Session = sessionmaker(bind=engine)
 session = Session()

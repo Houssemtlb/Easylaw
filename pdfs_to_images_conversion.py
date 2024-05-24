@@ -7,6 +7,10 @@ from sqlalchemy import create_engine, Column, Integer, Date
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import ARRAY
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -18,7 +22,8 @@ logging.basicConfig(
 
 Base = declarative_base()
 
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+DB_URL = os.getenv("PG_URL")
+engine = create_engine(DB_URL)
 
 class LastScrapingDate(Base):
     __tablename__ = "last_scraping_date"

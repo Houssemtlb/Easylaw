@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import time
+from dotenv import load_dotenv
 import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -20,7 +21,7 @@ import random
 
 import itertools
 
-
+load_dotenv()
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
@@ -82,7 +83,8 @@ class LawText(Base):
     page_fixed = Column(Boolean, default=False)
 
 
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+DB_URL = os.getenv("PG_URL")
+engine = create_engine(DB_URL)
 
 
 def scrape_kita3_law_data(kita3, start_date):

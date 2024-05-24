@@ -8,7 +8,10 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 import logging
 from datetime import date
+from dotenv import load_dotenv
 
+
+load_dotenv()
 
 def setup_logger(name, log_file, level=logging.INFO):
     """Function to setup as many loggers as you want"""
@@ -62,7 +65,9 @@ class Newspaper(Base):
     link = Column(String)
 
 
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/easylaw")
+DB_URL = os.getenv("PG_URL")
+engine = create_engine(DB_URL)
+
 Session = sessionmaker(bind=engine)
 session = Session()
 
